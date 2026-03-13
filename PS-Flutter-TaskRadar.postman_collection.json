@@ -1,0 +1,734 @@
+{
+  "info": {
+    "_postman_id": "45cff16f-d79d-41b1-b571-94aa923a1353",
+    "name": "PS-Flutter-TaskRadar",
+    "description": "DummyJSON API collection for Task Radar Flutter evaluation - Senior Mobile Developer at Senai Soluções Digitais",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "4689988"
+  },
+  "item": [
+    {
+      "name": "Auth - Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Has accessToken', function () { pm.expect(pm.response.json().accessToken).to.be.a('string'); });",
+              "var j = pm.response.json();",
+              "pm.collectionVariables.set('access_token', j.accessToken);",
+              "pm.collectionVariables.set('refresh_token', j.refreshToken);",
+              "pm.collectionVariables.set('user_id', j.id.toString());"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "packages": {},
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"emilys\",\n  \"password\": \"emilyspass\",\n  \"expiresInMins\": 30\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/login",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "auth",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Auth - Get Current User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Has user data', function () { var j = pm.response.json(); pm.expect(j.id).to.be.a('number'); pm.expect(j.username).to.be.a('string'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/me",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "auth",
+            "me"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Auth - Refresh Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Has new token', function () { pm.expect(pm.response.json().accessToken).to.be.a('string'); });",
+              "var j = pm.response.json();",
+              "pm.collectionVariables.set('access_token', j.accessToken);",
+              "pm.collectionVariables.set('refresh_token', j.refreshToken);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refreshToken\": \"{{refresh_token}}\",\n  \"expiresInMins\": 30\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/refresh",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "auth",
+            "refresh"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Todos - Get All (paginated)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Has todos', function () { pm.expect(pm.response.json().todos).to.be.an('array'); });",
+              "pm.test('Has pagination', function () { var j = pm.response.json(); pm.expect(j.total).to.be.a('number'); pm.expect(j.limit).to.be.a('number'); pm.expect(j.skip).to.be.a('number'); });"
+            ],
+            "type": "text/javascript",
+            "packages": {},
+            "requests": {}
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/todos?limit=10&skip=10",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "todos"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "10"
+            },
+            {
+              "key": "skip",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Todos - Get Single",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Has todo fields', function () { var j = pm.response.json(); pm.expect(j.id).to.be.a('number'); pm.expect(j.todo).to.be.a('string'); pm.expect(j).to.have.property('completed'); pm.expect(j.userId).to.be.a('number'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/todos/1",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "todos",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Todos - Get Random",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Returns todo', function () { var j = pm.response.json(); pm.expect(j[0] || j).to.have.property('id'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/todos/random",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "todos",
+            "random"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Todos - Get by User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Has todos', function () { pm.expect(pm.response.json().todos).to.be.an('array'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/todos/user/{{user_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "todos",
+            "user",
+            "{{user_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Todos - Add",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 201', function () { pm.response.to.have.status(201); });",
+              "pm.test('Todo created', function () { var j = pm.response.json(); pm.expect(j.id).to.be.a('number'); pm.expect(j.todo).to.eql('New task from Postman'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"todo\": \"New task from Postman\",\n  \"completed\": false,\n  \"userId\": {{user_id}}\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/todos/add",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "todos",
+            "add"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Todos - Update",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Updated', function () { pm.expect(pm.response.json().completed).to.eql(true); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"completed\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/todos/1",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "todos",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Todos - Delete",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Deleted', function () { pm.expect(pm.response.json().isDeleted).to.eql(true); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/todos/1",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "todos",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Users - Get All",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Has users', function () { pm.expect(pm.response.json().users).to.be.an('array'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/users?limit=10&skip=0&select=id,firstName,lastName,email,image",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "users"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "10"
+            },
+            {
+              "key": "skip",
+              "value": "0"
+            },
+            {
+              "key": "select",
+              "value": "id,firstName,lastName,email,image"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Users - Get Single",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Has user fields', function () { var j = pm.response.json(); pm.expect(j.id).to.be.a('number'); pm.expect(j.firstName).to.be.a('string'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/users/{{user_id}}",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "users",
+            "{{user_id}}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Users - Search",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Has users', function () { pm.expect(pm.response.json().users).to.be.an('array'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/users/search?q=John",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "users",
+            "search"
+          ],
+          "query": [
+            {
+              "key": "q",
+              "value": "John"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Users - Filter",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Filtered', function () { var j = pm.response.json(); j.users.forEach(function(u) { pm.expect(u.gender).to.eql('female'); }); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/users/filter?key=gender&value=female",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "users",
+            "filter"
+          ],
+          "query": [
+            {
+              "key": "key",
+              "value": "gender"
+            },
+            {
+              "key": "value",
+              "value": "female"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Users - Sort",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Sorted', function () { var u = pm.response.json().users; for (var i=1;i<u.length;i++) { pm.expect(u[i].firstName.localeCompare(u[i-1].firstName)).to.be.at.least(0); } });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/users?sortBy=firstName&order=asc",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "users"
+          ],
+          "query": [
+            {
+              "key": "sortBy",
+              "value": "firstName"
+            },
+            {
+              "key": "order",
+              "value": "asc"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Quotes - Get All",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Has quotes', function () { pm.expect(pm.response.json().quotes).to.be.an('array'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/quotes?limit=5&skip=0",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "quotes"
+          ],
+          "query": [
+            {
+              "key": "limit",
+              "value": "5"
+            },
+            {
+              "key": "skip",
+              "value": "0"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Quotes - Get Random",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('Has quote fields', function () { var j = pm.response.json(); pm.expect(j.quote).to.be.a('string'); pm.expect(j.author).to.be.a('string'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/quotes/random",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "quotes",
+            "random"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://dummyjson.com"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "refresh_token",
+      "value": ""
+    },
+    {
+      "key": "user_id",
+      "value": ""
+    }
+  ]
+}
