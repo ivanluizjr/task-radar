@@ -15,6 +15,7 @@ class DashboardState extends Equatable {
   final Quote? quote;
   final String? summaryError;
   final String? quoteError;
+  final String? userName;
 
   const DashboardState({
     this.isSummaryLoading = false,
@@ -25,6 +26,7 @@ class DashboardState extends Equatable {
     this.quote,
     this.summaryError,
     this.quoteError,
+    this.userName,
   });
 
   double get completionPercentage =>
@@ -39,6 +41,7 @@ class DashboardState extends Equatable {
     Quote? quote,
     String? summaryError,
     String? quoteError,
+    String? userName,
   }) {
     return DashboardState(
       isSummaryLoading: isSummaryLoading ?? this.isSummaryLoading,
@@ -49,6 +52,7 @@ class DashboardState extends Equatable {
       quote: quote ?? this.quote,
       summaryError: summaryError,
       quoteError: quoteError,
+      userName: userName ?? this.userName,
     );
   }
 
@@ -62,6 +66,7 @@ class DashboardState extends Equatable {
     quote,
     summaryError,
     quoteError,
+    userName,
   ];
 }
 
@@ -98,6 +103,7 @@ class DashboardCubit extends Cubit<DashboardState> {
         );
       },
       (user) async {
+        emit(state.copyWith(userName: user.firstName));
         final result = await _getTodoSummaryUseCase(user.id);
         result.fold(
           (failure) => emit(

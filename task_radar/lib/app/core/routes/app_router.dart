@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:task_radar/app/core/widgets/main_shell.dart';
 import 'package:task_radar/app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:task_radar/app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:task_radar/app/features/auth/presentation/pages/login_page.dart';
@@ -50,7 +50,7 @@ GoRouter createRouter(AuthBloc authBloc) {
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
-        builder: (context, state, child) => _MainShell(child: child),
+        builder: (context, state, child) => MainShell(child: child),
         routes: [
           GoRoute(
             path: '/dashboard',
@@ -69,11 +69,6 @@ GoRouter createRouter(AuthBloc authBloc) {
             builder: (context, state) => const ProfilePage(),
           ),
         ],
-      ),
-      GoRoute(
-        path: '/todos/create',
-        parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const TodoFormPage(),
       ),
       GoRoute(
         path: '/todos/:id',
@@ -102,79 +97,6 @@ GoRouter createRouter(AuthBloc authBloc) {
       ),
     ],
   );
-}
-
-class _MainShell extends StatelessWidget {
-  final Widget child;
-
-  const _MainShell({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    final authState = context.watch<AuthBloc>().state;
-    final isAdmin = authState is AuthAuthenticated && authState.user.isAdmin;
-
-    return Scaffold(
-      body: child,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _calculateSelectedIndex(context),
-        onDestinationSelected: (index) =>
-            _onItemTapped(index, context, isAdmin),
-        destinations: [
-          const NavigationDestination(
-            icon: Icon(Icons.dashboard_outlined),
-            selectedIcon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.checklist_outlined),
-            selectedIcon: Icon(Icons.checklist),
-            label: 'Tarefas',
-          ),
-          if (isAdmin)
-            const NavigationDestination(
-              icon: Icon(Icons.people_outline),
-              selectedIcon: Icon(Icons.people),
-              label: 'Usuários',
-            ),
-          const NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Perfil',
-          ),
-        ],
-      ),
-    );
-  }
-
-  int _calculateSelectedIndex(BuildContext context) {
-    final location = GoRouterState.of(context).matchedLocation;
-    final authState = context.read<AuthBloc>().state;
-    final isAdmin = authState is AuthAuthenticated && authState.user.isAdmin;
-
-    if (location.startsWith('/dashboard')) return 0;
-    if (location.startsWith('/todos')) return 1;
-    if (isAdmin && location.startsWith('/users')) return 2;
-    if (location.startsWith('/profile')) return isAdmin ? 3 : 2;
-    return 0;
-  }
-
-  void _onItemTapped(int index, BuildContext context, bool isAdmin) {
-    switch (index) {
-      case 0:
-        context.go('/dashboard');
-      case 1:
-        context.go('/todos');
-      case 2:
-        if (isAdmin) {
-          context.go('/users');
-        } else {
-          context.go('/profile');
-        }
-      case 3:
-        context.go('/profile');
-    }
-  }
 }
 
 class _AuthNotifier extends ChangeNotifier {

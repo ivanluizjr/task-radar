@@ -29,6 +29,7 @@ class _SplashShapeAnimationState extends State<SplashShapeAnimation>
   late final Animation<double> _rotationAngle;
   late final Animation<double> _shrinkSize;
   late final Animation<double> _shrinkRadius;
+  late final Animation<double> _shrinkRotation;
   late final Animation<double> _circleSize;
   late final Animation<double> _circleRadius;
   late final Animation<double> _explodeScale;
@@ -70,6 +71,10 @@ class _SplashShapeAnimationState extends State<SplashShapeAnimation>
     _shrinkRadius = Tween<double>(
       begin: 12,
       end: 8,
+    ).animate(CurvedAnimation(parent: _shrink, curve: Curves.easeInOut));
+    _shrinkRotation = Tween<double>(
+      begin: pi / 4,
+      end: 0,
     ).animate(CurvedAnimation(parent: _shrink, curve: Curves.easeInOut));
 
     _circle = AnimationController(
@@ -154,7 +159,9 @@ class _SplashShapeAnimationState extends State<SplashShapeAnimation>
             ? 0.0
             : phase == 1
             ? _rotationAngle.value
-            : pi / 4;
+            : phase == 2
+            ? _shrinkRotation.value
+            : 0.0;
 
         final radius = phase <= 1
             ? 12.0

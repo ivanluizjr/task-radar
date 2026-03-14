@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shimmer/shimmer.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:task_radar/app/core/theme/theme_cubit.dart';
 import 'package:task_radar/app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:task_radar/app/features/auth/presentation/bloc/auth_event.dart';
 import 'package:task_radar/app/features/auth/presentation/bloc/auth_state.dart';
+import 'package:task_radar/app/features/profile/presentation/widgets/profile_info_row.dart';
+import 'package:task_radar/app/features/profile/presentation/widgets/profile_shimmer.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -29,7 +31,7 @@ class _ProfilePageState extends State<ProfilePage> {
       body: BlocBuilder<AuthBloc, AuthState>(
         builder: (context, state) {
           if (state is AuthLoading) {
-            return _buildShimmer(context);
+            return const ProfileShimmer();
           }
 
           if (state is AuthError) {
@@ -101,13 +103,13 @@ class _ProfilePageState extends State<ProfilePage> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      _buildInfoRow(
+                      ProfileInfoRow(
                         icon: Icons.email_outlined,
                         label: 'E-mail',
                         value: user.email,
                       ),
                       const Divider(height: 24),
-                      _buildInfoRow(
+                      ProfileInfoRow(
                         icon: Icons.badge_outlined,
                         label: 'Função',
                         value: user.role,
@@ -154,65 +156,20 @@ class _ProfilePageState extends State<ProfilePage> {
                   foregroundColor: theme.colorScheme.error,
                   side: BorderSide(color: theme.colorScheme.error),
                 ),
-                icon: const Icon(Icons.logout),
+                icon: SvgPicture.asset(
+                  'assets/images/icon_logout.svg',
+                  width: 20,
+                  height: 20,
+                  colorFilter: ColorFilter.mode(
+                    theme.colorScheme.error,
+                    BlendMode.srcIn,
+                  ),
+                ),
                 label: const Text('Sair'),
               ),
             ],
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildInfoRow({
-    required IconData icon,
-    required String label,
-    required String value,
-  }) {
-    return Row(
-      children: [
-        Icon(icon, size: 20, color: Colors.grey.shade400),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-            ),
-            Text(value, style: const TextStyle(fontSize: 16)),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildShimmer(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Shimmer.fromColors(
-      baseColor: isDark ? Colors.grey.shade800 : Colors.grey.shade300,
-      highlightColor: isDark ? Colors.grey.shade700 : Colors.grey.shade100,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const SizedBox(height: 16),
-          const Center(child: CircleAvatar(radius: 50)),
-          const SizedBox(height: 16),
-          Center(
-            child: Container(
-              width: 160,
-              height: 24,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Card(child: SizedBox(height: 100)),
-          const SizedBox(height: 16),
-          Card(child: SizedBox(height: 56)),
-        ],
       ),
     );
   }

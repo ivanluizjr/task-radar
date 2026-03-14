@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:task_radar/app/core/di/injection_container.dart';
 import 'package:task_radar/app/core/routes/app_router.dart';
 import 'package:task_radar/app/core/theme/app_theme.dart';
@@ -9,17 +10,35 @@ import 'package:task_radar/app/features/dashboard/presentation/bloc/dashboard_cu
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_bloc.dart';
 import 'package:task_radar/app/features/users/presentation/bloc/users_bloc.dart';
 
-class TaskRadarApp extends StatelessWidget {
+class TaskRadarApp extends StatefulWidget {
   const TaskRadarApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final authBloc = sl<AuthBloc>();
-    final router = createRouter(authBloc);
+  State<TaskRadarApp> createState() => _TaskRadarAppState();
+}
 
+class _TaskRadarAppState extends State<TaskRadarApp> {
+  late final AuthBloc _authBloc;
+  late final GoRouter _router;
+
+  @override
+  void initState() {
+    super.initState();
+    _authBloc = sl<AuthBloc>();
+    _router = createRouter(_authBloc);
+  }
+
+  @override
+  void dispose() {
+    _router.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<AuthBloc>.value(value: authBloc),
+        BlocProvider<AuthBloc>.value(value: _authBloc),
         BlocProvider<ThemeCubit>.value(value: sl<ThemeCubit>()),
         BlocProvider<TodosBloc>(create: (_) => sl<TodosBloc>()),
         BlocProvider<UsersBloc>(create: (_) => sl<UsersBloc>()),
@@ -33,7 +52,7 @@ class TaskRadarApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: themeMode,
-            routerConfig: router,
+            routerConfig: _router,
           );
         },
       ),

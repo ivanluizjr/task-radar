@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:task_radar/app/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:task_radar/app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_bloc.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_event.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_state.dart';
@@ -19,18 +17,14 @@ class TodoFormPage extends StatefulWidget {
 class _TodoFormPageState extends State<TodoFormPage> {
   final _formKey = GlobalKey<FormState>();
   final _todoController = TextEditingController();
-  bool _isEditing = false;
 
   @override
   void initState() {
     super.initState();
-    if (widget.todoId != null) {
-      _isEditing = true;
-      final state = context.read<TodosBloc>().state;
-      final todo = state.allTodos.where((t) => t.id == widget.todoId).firstOrNull;
-      if (todo != null) {
-        _todoController.text = todo.todo;
-      }
+    final state = context.read<TodosBloc>().state;
+    final todo = state.allTodos.where((t) => t.id == widget.todoId).firstOrNull;
+    if (todo != null) {
+      _todoController.text = todo.todo;
     }
   }
 
@@ -43,15 +37,13 @@ class _TodoFormPageState extends State<TodoFormPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_isEditing ? 'Editar Tarefa' : 'Nova Tarefa'),
-      ),
+      appBar: AppBar(title: const Text('Editar Tarefa')),
       body: BlocListener<TodosBloc, TodosState>(
         listener: (context, state) {
           if (state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage!)),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
           }
         },
         child: Padding(
@@ -77,10 +69,7 @@ class _TodoFormPageState extends State<TodoFormPage> {
                   },
                 ),
                 const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: _submit,
-                  child: Text(_isEditing ? 'Salvar' : 'Criar'),
-                ),
+                ElevatedButton(onPressed: _submit, child: const Text('Salvar')),
               ],
             ),
           ),
@@ -94,24 +83,9 @@ class _TodoFormPageState extends State<TodoFormPage> {
 
     final description = _todoController.text.trim();
 
-    if (_isEditing) {
-      context.read<TodosBloc>().add(
-            UpdateTodoRequested(
-              id: widget.todoId!,
-              todo: description,
-            ),
-          );
-    } else {
-      final authState = context.read<AuthBloc>().state;
-      final userId = authState is AuthAuthenticated ? authState.user.id : 1;
-
-      context.read<TodosBloc>().add(
-            CreateTodoRequested(
-              todo: description,
-              userId: userId,
-            ),
-          );
-    }
+    context.read<TodosBloc>().add(
+      UpdateTodoRequested(id: widget.todoId!, todo: description),
+    );
 
     context.pop();
   }

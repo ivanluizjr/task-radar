@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   AppTheme._();
@@ -17,6 +18,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+      textTheme: GoogleFonts.robotoTextTheme(ThemeData.dark().textTheme),
       colorScheme: const ColorScheme.dark(
         primary: _primaryDark,
         onPrimary: Colors.black,
@@ -98,6 +100,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
+      textTheme: GoogleFonts.robotoTextTheme(ThemeData.light().textTheme),
       colorScheme: const ColorScheme.light(
         primary: _primaryLight,
         onPrimary: Colors.black,

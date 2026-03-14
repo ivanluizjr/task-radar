@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:task_radar/app/features/todos/domain/entities/todo.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_bloc.dart';
@@ -19,7 +20,10 @@ class TodoDetailPage extends StatelessWidget {
       listener: (context, state) {
         if (state.errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage!)),
+            SnackBar(
+              content: Text(state.errorMessage!),
+              backgroundColor: theme.colorScheme.error,
+            ),
           );
         }
       },
@@ -28,101 +32,74 @@ class TodoDetailPage extends StatelessWidget {
 
         if (todo == null) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Tarefa')),
+            appBar: AppBar(
+              title: const Text('Tarefas'),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () => context.pop(),
+                ),
+              ],
+            ),
             body: const Center(child: Text('Tarefa não encontrada')),
           );
         }
 
+        final parts = todo.todo.split('\n');
+        final title = parts.first;
+        final description = parts.length > 1
+            ? parts.sublist(1).join('\n')
+            : null;
+
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Detalhes da Tarefa'),
+            title: const Text('Tarefas'),
             actions: [
               IconButton(
-                icon: const Icon(Icons.edit),
-                onPressed: () => context.push('/todos/${todo.id}/edit'),
-              ),
-              IconButton(
-                icon: Icon(
-                  Icons.delete_outline,
-                  color: theme.colorScheme.error,
-                ),
-                onPressed: () => _confirmDelete(context, todo),
+                icon: const Icon(Icons.close),
+                onPressed: () => context.pop(),
               ),
             ],
           ),
           body: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              todo.completed
-                                  ? Icons.check_circle
-                                  : Icons.radio_button_unchecked,
-                              color: todo.completed
-                                  ? const Color(0xFF4CAF50)
-                                  : Colors.orange,
-                              size: 28,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                todo.completed ? 'Concluída' : 'Pendente',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: todo.completed
-                                      ? const Color(0xFF4CAF50)
-                                      : Colors.orange,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Divider(height: 24),
-                        Text(
-                          todo.todo,
-                          style: const TextStyle(fontSize: 18),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'ID: ${todo.id}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.shade500,
-                          ),
-                        ),
-                      ],
-                    ),
+                const Divider(thickness: 2),
+                const SizedBox(height: 20),
+                Text(
+                  title,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 16),
+                if (description != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    description,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey.shade400,
+                    ),
+                  ),
+                ],
+                const Spacer(),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      context.read<TodosBloc>().add(
-                            ToggleTodoStatus(
-                              id: todo.id,
-                              completed: !todo.completed,
-                            ),
-                          );
-                    },
-                    icon: Icon(
-                      todo.completed
-                          ? Icons.undo
-                          : Icons.check,
+                  child: TextButton.icon(
+                    onPressed: () => _confirmDelete(context, todo),
+                    icon: SvgPicture.asset(
+                      'assets/images/icon_delete.svg',
+                      width: 20,
+                      height: 20,
+                      colorFilter: ColorFilter.mode(
+                        theme.colorScheme.error,
+                        BlendMode.srcIn,
+                      ),
                     ),
                     label: Text(
-                      todo.completed ? 'Marcar como pendente' : 'Concluir tarefa',
+                      'Excluir',
+                      style: TextStyle(color: theme.colorScheme.error),
                     ),
                   ),
                 ),
@@ -135,11 +112,14 @@ class TodoDetailPage extends StatelessWidget {
   }
 
   void _confirmDelete(BuildContext context, Todo todo) {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Excluir tarefa'),
-        content: const Text('Tem certeza que deseja excluir esta tarefa?'),
+        title: const Text('Excluir tarefa?'),
+        content: const Text(
+          'A tarefa desaparecerá e não poderá ser recuperada.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
@@ -153,7 +133,7 @@ class TodoDetailPage extends StatelessWidget {
             },
             child: Text(
               'Excluir',
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
+              style: TextStyle(color: theme.colorScheme.error),
             ),
           ),
         ],
