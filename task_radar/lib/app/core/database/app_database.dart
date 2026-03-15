@@ -15,7 +15,7 @@ class AppDatabase {
 
     return openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE todos (
@@ -39,12 +39,34 @@ class AppDatabase {
         ''');
 
         await db.execute('''
+          CREATE TABLE deleted_todos (
+            id INTEGER PRIMARY KEY
+          )
+        ''');
+
+        await db.execute('''
           CREATE INDEX idx_todos_userId ON todos(userId)
         ''');
 
         await db.execute('''
           CREATE INDEX idx_todos_completed ON todos(completed)
         ''');
+
+        await db.execute('''
+          CREATE INDEX idx_deleted_todos_id ON deleted_todos(id)
+        ''');
+      },
+      onUpgrade: (db, oldVersion, newVersion) async {
+        if (oldVersion < 2) {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS deleted_todos (
+              id INTEGER PRIMARY KEY
+            )
+          ''');
+          await db.execute('''
+            CREATE INDEX IF NOT EXISTS idx_deleted_todos_id ON deleted_todos(id)
+          ''');
+        }
       },
     );
   }

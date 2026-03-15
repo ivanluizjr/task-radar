@@ -37,3 +37,14 @@ class AuthError extends AuthState {
   @override
   List<Object?> get props => [message];
 }
+
+/// Estado intermediário emitido apenas ao refrescar o perfil já autenticado.
+/// Carrega o usuário anterior para evitar piscar durante a transição.
+class AuthRefreshing extends AuthState {
+  final User user;
+
+  const AuthRefreshing(this.user);
+
+  @override
+  List<Object?> get props => [user];
+}

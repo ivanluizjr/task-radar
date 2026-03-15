@@ -92,7 +92,12 @@ GoRouter createRouter(AuthBloc authBloc) {
         builder: (context, state) {
           final userId = int.parse(state.pathParameters['userId']!);
           final userName = state.uri.queryParameters['name'] ?? 'Usuário';
-          return UserTodosPage(userId: userId, userName: userName);
+          final userImage = state.uri.queryParameters['image'];
+          return UserTodosPage(
+            userId: userId,
+            userName: userName,
+            userImage: userImage,
+          );
         },
       ),
     ],

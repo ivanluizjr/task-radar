@@ -23,7 +23,14 @@ class LoadTodos extends TodosEvent {
 }
 
 class LoadMoreTodos extends TodosEvent {
-  const LoadMoreTodos();
+  /// Quando [silent] é true, o bloc não emite status de loading — os resultados
+  /// aparecem silenciosamente na lista sem mostrar o spinner no rodapé.
+  final bool silent;
+
+  const LoadMoreTodos({this.silent = false});
+
+  @override
+  List<Object?> get props => [silent];
 }
 
 class CreateTodoRequested extends TodosEvent {

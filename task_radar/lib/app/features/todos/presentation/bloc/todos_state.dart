@@ -14,6 +14,7 @@ class TodosState extends Equatable {
   final String searchQuery;
   final TodoSortBy sortBy;
   final SortOrder sortOrder;
+  final int sortVersion;
   final String? errorMessage;
   final int? userId;
 
@@ -27,6 +28,7 @@ class TodosState extends Equatable {
     this.searchQuery = '',
     this.sortBy = TodoSortBy.id,
     this.sortOrder = SortOrder.ascending,
+    this.sortVersion = 0,
     this.errorMessage,
     this.userId,
   });
@@ -87,6 +89,7 @@ class TodosState extends Equatable {
     String? searchQuery,
     TodoSortBy? sortBy,
     SortOrder? sortOrder,
+    int? sortVersion,
     String? errorMessage,
     int? userId,
   }) {
@@ -100,6 +103,7 @@ class TodosState extends Equatable {
       searchQuery: searchQuery ?? this.searchQuery,
       sortBy: sortBy ?? this.sortBy,
       sortOrder: sortOrder ?? this.sortOrder,
+      sortVersion: sortVersion ?? this.sortVersion,
       errorMessage: errorMessage,
       userId: userId ?? this.userId,
     );
@@ -116,6 +120,7 @@ class TodosState extends Equatable {
     searchQuery,
     sortBy,
     sortOrder,
+    sortVersion,
     errorMessage,
     userId,
   ];

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:task_radar/app/core/theme/app_theme.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_bloc.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_event.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_state.dart';
@@ -13,8 +14,9 @@ class TodoFilterChipsBar extends StatelessWidget {
       buildWhen: (prev, curr) => prev.filter != curr.filter,
       builder: (context, state) {
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 32),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               TodoFilterChip(
                 label: 'Todas',
@@ -62,12 +64,46 @@ class TodoFilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      onSelected: (_) => onSelected(),
-      selectedColor: theme.colorScheme.primary,
-      labelStyle: TextStyle(color: selected ? Colors.black : null),
+    final isLight = theme.brightness == Brightness.light;
+    final selectedBackground = isLight
+        ? theme.appColors.grayLight
+        : theme.appColors.grayDark;
+    final chipBackground = selected ? selectedBackground : Colors.transparent;
+    final textColor = selected
+        ? isLight
+              ? Colors.black
+              : Colors.white
+        : (isLight ? Colors.black : Colors.white);
+    final borderColor = selected
+        ? selectedBackground
+        : (isLight ? Colors.black : theme.appColors.grayLight);
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onSelected,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: chipBackground,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(width: 1, color: borderColor),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (selected) ...[
+                Icon(Icons.check, size: 16, color: textColor),
+                const SizedBox(width: 6),
+              ],
+              Text(label, style: TextStyle(color: textColor)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

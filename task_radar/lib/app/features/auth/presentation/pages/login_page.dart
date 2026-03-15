@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:task_radar/app/core/widgets/app_feedback.dart';
 import 'package:task_radar/app/core/widgets/spinner_animation.dart';
 import 'package:task_radar/app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:task_radar/app/features/auth/presentation/bloc/auth_event.dart';
@@ -29,17 +30,13 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
 
     return Scaffold(
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: theme.colorScheme.error,
-              ),
-            );
+            showAppErrorSnackBar(context, state.message);
           }
         },
         child: SafeArea(

@@ -1,22 +1,28 @@
-
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
+// ignore_for_file: type=lint
+// ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
 part of 'login_response_model.dart';
 
+// **************************************************************************
+// FreezedGenerator
+// **************************************************************************
 
-
-
+// dart format off
 T _$identity<T>(T value) => value;
 
-
+/// @nodoc
 mixin _$LoginResponseModel {
 
  int get id; String get username; String get email; String get firstName; String get lastName; String? get gender; String? get image; String get accessToken; String get refreshToken;
-
+/// Create a copy of LoginResponseModel
+/// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $LoginResponseModelCopyWith<LoginResponseModel> get copyWith => _$LoginResponseModelCopyWithImpl<LoginResponseModel>(this as LoginResponseModel, _$identity);
 
-  
+  /// Serializes this LoginResponseModel to a JSON map.
   Map<String, dynamic> toJson();
 
 
@@ -37,9 +43,9 @@ String toString() {
 
 }
 
-
+/// @nodoc
 abstract mixin class $LoginResponseModelCopyWith<$Res>  {
-  factory $LoginResponseModelCopyWith(LoginResponseModel value, $Res Function(LoginResponseModel) then) = _$LoginResponseModelCopyWithImpl;
+  factory $LoginResponseModelCopyWith(LoginResponseModel value, $Res Function(LoginResponseModel) _then) = _$LoginResponseModelCopyWithImpl;
 @useResult
 $Res call({
  int id, String username, String email, String firstName, String lastName, String? gender, String? image, String accessToken, String refreshToken
@@ -49,7 +55,7 @@ $Res call({
 
 
 }
-
+/// @nodoc
 class _$LoginResponseModelCopyWithImpl<$Res>
     implements $LoginResponseModelCopyWith<$Res> {
   _$LoginResponseModelCopyWithImpl(this._self, this._then);
@@ -57,8 +63,9 @@ class _$LoginResponseModelCopyWithImpl<$Res>
   final LoginResponseModel _self;
   final $Res Function(LoginResponseModel) _then;
 
-
-@pragma('vm:prefer-inline') @override $Res call({Object? id,Object? username,Object? email,Object? firstName,Object? lastName,Object? gender = freezed,Object? image = freezed,Object? accessToken,Object? refreshToken,}) {
+/// Create a copy of LoginResponseModel
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? username = null,Object? email = null,Object? firstName = null,Object? lastName = null,Object? gender = freezed,Object? image = freezed,Object? accessToken = null,Object? refreshToken = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,username: null == username ? _self.username : username // ignore: cast_nullable_to_non_nullable
@@ -90,11 +97,11 @@ extension LoginResponseModelPatterns on LoginResponseModel {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LoginResponseModel value)?  $default,{required TResult Function() orElse,}){
-final that = this;
-switch (that) {
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _LoginResponseModel value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
 case _LoginResponseModel() when $default != null:
-return $default(that);case _:
+return $default(_that);case _:
   return orElse();
 
 }
@@ -113,10 +120,10 @@ return $default(that);case _:
 /// ```
 
 @optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _LoginResponseModel value)  $default,){
-final that = this;
-switch (that) {
+final _that = this;
+switch (_that) {
 case _LoginResponseModel():
-return $default(that);case _:
+return $default(_that);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -134,10 +141,10 @@ return $default(that);case _:
 /// ```
 
 @optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _LoginResponseModel value)?  $default,){
-final that = this;
-switch (that) {
+final _that = this;
+switch (_that) {
 case _LoginResponseModel() when $default != null:
-return $default(that);case _:
+return $default(_that);case _:
   return null;
 
 }
@@ -154,10 +161,10 @@ return $default(that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String username,  String email,  String firstName,  String lastName,  String? gender,  String? image,  String accessToken,  String refreshToken)?  $default,{required TResult Function() orElse,}) {final that = this;
-switch (that) {
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String username,  String email,  String firstName,  String lastName,  String? gender,  String? image,  String accessToken,  String refreshToken)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
 case _LoginResponseModel() when $default != null:
-return $default(that.id,that.username,that.email,that.firstName,that.lastName,that.gender,that.image,that.accessToken,that.refreshToken);case _:
+return $default(_that.id,_that.username,_that.email,_that.firstName,_that.lastName,_that.gender,_that.image,_that.accessToken,_that.refreshToken);case _:
   return orElse();
 
 }
@@ -175,10 +182,10 @@ return $default(that.id,that.username,that.email,that.firstName,that.lastName,th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String username,  String email,  String firstName,  String lastName,  String? gender,  String? image,  String accessToken,  String refreshToken)  $default,) {final that = this;
-switch (that) {
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String username,  String email,  String firstName,  String lastName,  String? gender,  String? image,  String accessToken,  String refreshToken)  $default,) {final _that = this;
+switch (_that) {
 case _LoginResponseModel():
-return $default(that.id,that.username,that.email,that.firstName,that.lastName,that.gender,that.image,that.accessToken,that.refreshToken);case _:
+return $default(_that.id,_that.username,_that.email,_that.firstName,_that.lastName,_that.gender,_that.image,_that.accessToken,_that.refreshToken);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -195,10 +202,10 @@ return $default(that.id,that.username,that.email,that.firstName,that.lastName,th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String username,  String email,  String firstName,  String lastName,  String? gender,  String? image,  String accessToken,  String refreshToken)?  $default,) {final that = this;
-switch (that) {
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String username,  String email,  String firstName,  String lastName,  String? gender,  String? image,  String accessToken,  String refreshToken)?  $default,) {final _that = this;
+switch (_that) {
 case _LoginResponseModel() when $default != null:
-return $default(that.id,that.username,that.email,that.firstName,that.lastName,that.gender,that.image,that.accessToken,that.refreshToken);case _:
+return $default(_that.id,_that.username,_that.email,_that.firstName,_that.lastName,_that.gender,_that.image,_that.accessToken,_that.refreshToken);case _:
   return null;
 
 }
@@ -253,7 +260,7 @@ String toString() {
 
 /// @nodoc
 abstract mixin class _$LoginResponseModelCopyWith<$Res> implements $LoginResponseModelCopyWith<$Res> {
-  factory _$LoginResponseModelCopyWith(_LoginResponseModel value, $Res Function(_LoginResponseModel) then) = __$LoginResponseModelCopyWithImpl;
+  factory _$LoginResponseModelCopyWith(_LoginResponseModel value, $Res Function(_LoginResponseModel) _then) = __$LoginResponseModelCopyWithImpl;
 @override @useResult
 $Res call({
  int id, String username, String email, String firstName, String lastName, String? gender, String? image, String accessToken, String refreshToken
@@ -273,7 +280,7 @@ class __$LoginResponseModelCopyWithImpl<$Res>
 
 /// Create a copy of LoginResponseModel
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id,Object? username,Object? email,Object? firstName,Object? lastName,Object? gender = freezed,Object? image = freezed,Object? accessToken,Object? refreshToken,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? username = null,Object? email = null,Object? firstName = null,Object? lastName = null,Object? gender = freezed,Object? image = freezed,Object? accessToken = null,Object? refreshToken = null,}) {
   return _then(_LoginResponseModel(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as int,username: null == username ? _self.username : username // ignore: cast_nullable_to_non_nullable

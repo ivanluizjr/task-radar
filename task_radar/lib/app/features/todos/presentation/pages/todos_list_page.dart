@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:task_radar/app/core/widgets/app_search_field.dart';
+import 'package:task_radar/app/core/widgets/app_state_widgets.dart';
+import 'package:task_radar/app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:task_radar/app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_bloc.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_event.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_state.dart';
@@ -17,12 +22,17 @@ class TodosListPage extends StatefulWidget {
 class _TodosListPageState extends State<TodosListPage> {
   final _scrollController = ScrollController();
   final _searchController = TextEditingController();
+  _SortMenuChoice _selectedSortMenuChoice = _SortMenuChoice.name;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
-    context.read<TodosBloc>().add(const LoadTodos());
+    final authState = context.read<AuthBloc>().state;
+    final userId = authState is AuthAuthenticated
+        ? authState.user.id
+        : (authState is AuthRefreshing ? authState.user.id : null);
+    context.read<TodosBloc>().add(LoadTodos(userId: userId));
   }
 
   @override
@@ -33,6 +43,9 @@ class _TodosListPageState extends State<TodosListPage> {
   }
 
   void _onScroll() {
+    final state = context.read<TodosBloc>().state;
+    if (state.searchQuery.isNotEmpty) return;
+
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
       context.read<TodosBloc>().add(const LoadMoreTodos());
@@ -42,108 +55,148 @@ class _TodosListPageState extends State<TodosListPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Tarefas')),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
+          BlocBuilder<TodosBloc, TodosState>(
+            buildWhen: (prev, curr) => prev.searchQuery != curr.searchQuery,
+            builder: (context, state) {
+              return AppSearchField(
+                controller: _searchController,
                 hintText: 'Pesquisar tarefas',
-                prefixIcon: const Icon(Icons.search),
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade700),
+                hintStyle: TextStyle(
+                  color: isLight ? Colors.black : Colors.white,
                 ),
-              ),
-              onChanged: (value) {
-                context.read<TodosBloc>().add(SearchTodos(value));
-              },
-            ),
+                hasText: state.searchQuery.isNotEmpty,
+                onChanged: (value) =>
+                    context.read<TodosBloc>().add(SearchTodos(value)),
+                onClear: () {
+                  _searchController.clear();
+                  context.read<TodosBloc>().add(const SearchTodos(''));
+                },
+              );
+            },
           ),
           const SizedBox(height: 8),
           const TodoFilterChipsBar(),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: BlocBuilder<TodosBloc, TodosState>(
-              buildWhen: (prev, curr) =>
-                  prev.sortBy != curr.sortBy ||
-                  prev.sortOrder != curr.sortOrder,
-              builder: (context, state) {
-                return Row(
-                  children: [
-                    Text(
-                      'Ordenar por:',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.grey.shade400,
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              child: BlocBuilder<TodosBloc, TodosState>(
+                buildWhen: (prev, curr) =>
+                    prev.sortBy != curr.sortBy ||
+                    prev.sortOrder != curr.sortOrder ||
+                    prev.sortVersion != curr.sortVersion,
+                builder: (context, state) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Ordenar por:',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: isLight ? Colors.black : Colors.white,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    PopupMenuButton<_SortOption>(
-                      padding: EdgeInsets.zero,
-                      position: PopupMenuPosition.under,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _sortLabel(state.sortBy),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.primary,
+                      const SizedBox(height: 4),
+                      PopupMenuButton<_SortOption>(
+                        padding: EdgeInsets.zero,
+                        position: PopupMenuPosition.under,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade700),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _sortMenuLabel(_selectedSortMenuChoice),
+                                style: theme.textTheme.bodySmall,
+                              ),
+                              const SizedBox(width: 4),
+                              SvgPicture.asset(
+                                'assets/images/icon_arrow_dow.svg',
+                                color: isLight ? Colors.black : Colors.white,
+                              ),
+                            ],
+                          ),
+                        ),
+                        onSelected: (option) {
+                          setState(() {
+                            _selectedSortMenuChoice = option.menuChoice;
+                          });
+                          context.read<TodosBloc>().add(
+                            SortTodosRequested(
+                              sortBy: option.sortBy,
+                              order: option.order,
                             ),
-                          ),
-                          Icon(
-                            Icons.arrow_drop_down,
-                            size: 18,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ],
+                          );
+                        },
+                        itemBuilder: (context) {
+                          final currentSortBy = state.sortBy == TodoSortBy.id
+                              ? TodoSortBy.alphabetical
+                              : state.sortBy;
+                          return [
+                            CheckedPopupMenuItem(
+                              value: _SortOption(
+                                menuChoice: _SortMenuChoice.name,
+                                sortBy: TodoSortBy.alphabetical,
+                                order: state.sortOrder,
+                              ),
+                              checked:
+                                  _selectedSortMenuChoice ==
+                                  _SortMenuChoice.name,
+                              child: const Text('Nome'),
+                            ),
+                            CheckedPopupMenuItem(
+                              value: _SortOption(
+                                menuChoice: _SortMenuChoice.completionDate,
+                                sortBy: TodoSortBy.status,
+                                order: state.sortOrder,
+                              ),
+                              checked:
+                                  _selectedSortMenuChoice ==
+                                  _SortMenuChoice.completionDate,
+                              child: const Text('Data de conclusão'),
+                            ),
+                            CheckedPopupMenuItem(
+                              value: _SortOption(
+                                menuChoice: _SortMenuChoice.ascending,
+                                sortBy: currentSortBy,
+                                order: SortOrder.ascending,
+                              ),
+                              checked:
+                                  _selectedSortMenuChoice ==
+                                  _SortMenuChoice.ascending,
+                              child: const Text('Ordem crescente'),
+                            ),
+                            CheckedPopupMenuItem(
+                              value: _SortOption(
+                                menuChoice: _SortMenuChoice.descending,
+                                sortBy: currentSortBy,
+                                order: SortOrder.descending,
+                              ),
+                              checked:
+                                  _selectedSortMenuChoice ==
+                                  _SortMenuChoice.descending,
+                              child: const Text('Ordem decrescente'),
+                            ),
+                          ];
+                        },
                       ),
-                      onSelected: (option) {
-                        context.read<TodosBloc>().add(
-                          SortTodosRequested(
-                            sortBy: option.sortBy,
-                            order: option.order,
-                          ),
-                        );
-                      },
-                      itemBuilder: (context) => [
-                        PopupMenuItem(
-                          value: _SortOption(
-                            TodoSortBy.alphabetical,
-                            SortOrder.ascending,
-                          ),
-                          child: const Text('Nome'),
-                        ),
-                        PopupMenuItem(
-                          value: _SortOption(
-                            TodoSortBy.status,
-                            SortOrder.ascending,
-                          ),
-                          child: const Text('Data de conclusão'),
-                        ),
-                        PopupMenuItem(
-                          value: _SortOption(
-                            TodoSortBy.alphabetical,
-                            SortOrder.ascending,
-                          ),
-                          child: const Text('Ordem crescente'),
-                        ),
-                        PopupMenuItem(
-                          value: _SortOption(
-                            TodoSortBy.alphabetical,
-                            SortOrder.descending,
-                          ),
-                          child: const Text('Ordem decrescente'),
-                        ),
-                      ],
-                    ),
-                  ],
-                );
-              },
+                    ],
+                  );
+                },
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -152,38 +205,31 @@ class _TodosListPageState extends State<TodosListPage> {
               builder: (context, state) {
                 if (state.status == TodosStatus.loading &&
                     state.allTodos.isEmpty) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const AppCenteredLoading();
                 }
 
                 if (state.errorMessage != null && state.allTodos.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          state.errorMessage!,
-                          style: TextStyle(color: theme.colorScheme.error),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () =>
-                              context.read<TodosBloc>().add(const LoadTodos()),
-                          child: const Text('Tentar novamente'),
-                        ),
-                      ],
-                    ),
+                  return AppErrorRetry(
+                    message: state.errorMessage!,
+                    onRetry: () =>
+                        context.read<TodosBloc>().add(const LoadTodos()),
                   );
                 }
 
                 final todos = state.filteredTodos;
 
                 if (todos.isEmpty) {
-                  return const Center(child: Text('Nenhuma tarefa encontrada'));
+                  return const AppEmptyState(
+                    message: 'Nenhuma tarefa encontrada',
+                  );
                 }
 
                 final pendingTodos = todos.where((t) => !t.completed).toList();
                 final completedTodos = todos.where((t) => t.completed).toList();
+
+                final showCompletedFirst =
+                    state.sortBy == TodoSortBy.status &&
+                    state.sortOrder == SortOrder.descending;
 
                 return RefreshIndicator(
                   onRefresh: () async {
@@ -191,23 +237,42 @@ class _TodosListPageState extends State<TodosListPage> {
                   },
                   child: ListView(
                     controller: _scrollController,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
                     children: [
-                      if (pendingTodos.isNotEmpty) ...[
-                        _SectionHeader(title: 'Pendentes'),
-                        ...pendingTodos.map((todo) => TodoItemCard(todo: todo)),
+                      if (showCompletedFirst) ...[
+                        if (completedTodos.isNotEmpty) ...[
+                          _SectionHeader(title: 'Concluídas', isLight: isLight),
+                          ...completedTodos.map(
+                            (todo) => TodoItemCard(todo: todo),
+                          ),
+                        ],
+                        if (pendingTodos.isNotEmpty) ...[
+                          _SectionHeader(title: 'Pendentes', isLight: isLight),
+                          ...pendingTodos.map(
+                            (todo) => TodoItemCard(todo: todo),
+                          ),
+                        ],
+                      ] else ...[
+                        if (pendingTodos.isNotEmpty) ...[
+                          _SectionHeader(title: 'Pendentes', isLight: isLight),
+                          ...pendingTodos.map(
+                            (todo) => TodoItemCard(todo: todo),
+                          ),
+                        ],
+                        if (completedTodos.isNotEmpty) ...[
+                          _SectionHeader(title: 'Concluídas', isLight: isLight),
+                          ...completedTodos.map(
+                            (todo) => TodoItemCard(todo: todo),
+                          ),
+                        ],
                       ],
-                      if (completedTodos.isNotEmpty) ...[
-                        _SectionHeader(title: 'Concluídas'),
-                        ...completedTodos.map(
-                          (todo) => TodoItemCard(todo: todo),
-                        ),
-                      ],
-                      if (!state.hasReachedMax)
-                        const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Center(child: CircularProgressIndicator()),
-                        ),
+                      // Mostra footer: sempre no filtro 'todas' enquanto há mais páginas
+                      // ou quando o usuário acionou manualmente (status loading em qualquer filtro)
+                      if (state.searchQuery.isEmpty &&
+                          (!state.hasReachedMax &&
+                                  state.filter == TodoFilter.all ||
+                              state.status == TodosStatus.loading))
+                        const AppListFooterLoader(),
                     ],
                   ),
                 );
@@ -217,49 +282,61 @@ class _TodosListPageState extends State<TodosListPage> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: const Color(0xFF32D583),
+        backgroundColor: theme.colorScheme.primary,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+        elevation: 0,
         foregroundColor: Colors.black,
         onPressed: () => showCreateTodoBottomSheet(context),
-        child: const Icon(Icons.add),
+        child: Icon(Icons.add),
       ),
     );
   }
 
-  String _sortLabel(TodoSortBy sortBy) {
-    switch (sortBy) {
-      case TodoSortBy.alphabetical:
+  String _sortMenuLabel(_SortMenuChoice choice) {
+    switch (choice) {
+      case _SortMenuChoice.name:
         return 'Nome';
-      case TodoSortBy.status:
+      case _SortMenuChoice.completionDate:
         return 'Data de conclusão';
-      case TodoSortBy.id:
-        return 'Nome';
+      case _SortMenuChoice.ascending:
+        return 'Ordem crescente';
+      case _SortMenuChoice.descending:
+        return 'Ordem decrescente';
     }
   }
 }
 
+enum _SortMenuChoice { name, completionDate, ascending, descending }
+
+class _SortOption {
+  final _SortMenuChoice menuChoice;
+  final TodoSortBy sortBy;
+  final SortOrder order;
+
+  const _SortOption({
+    required this.menuChoice,
+    required this.sortBy,
+    required this.order,
+  });
+}
+
 class _SectionHeader extends StatelessWidget {
   final String title;
+  final bool isLight;
 
-  const _SectionHeader({required this.title});
+  const _SectionHeader({required this.title, required this.isLight});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 16, bottom: 8),
+      padding: const EdgeInsets.only(top: 8, bottom: 8),
       child: Text(
         title,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: Colors.grey.shade400,
+          color: isLight ? Colors.black : Colors.white,
           fontWeight: FontWeight.w500,
         ),
       ),
     );
   }
-}
-
-class _SortOption {
-  final TodoSortBy sortBy;
-  final SortOrder order;
-
-  const _SortOption(this.sortBy, this.order);
 }

@@ -18,8 +18,12 @@ abstract class TodoLocalDataSource {
     required int limit,
     required int skip,
   });
+  Future<List<TodoModel>> getAllTodosByUser(int userId);
+  Future<List<TodoModel>> getAllCachedTodos();
   Future<List<TodoModel>> searchTodos(String query);
   Future<({int total, int completed, int pending})> getSummary(int userId);
+  Future<Set<int>> getDeletedTodoIds();
+  Future<void> markTodoDeleted(int id);
 }
 
 class TodoLocalDataSourceImpl implements TodoLocalDataSource {
@@ -146,6 +150,31 @@ class TodoLocalDataSourceImpl implements TodoLocalDataSource {
   }
 
   @override
+  Future<List<TodoModel>> getAllTodosByUser(int userId) async {
+    try {
+      final result = await _db.query(
+        'todos',
+        where: 'userId = ?',
+        whereArgs: [userId],
+        orderBy: 'id ASC',
+      );
+      return result.map(_mapToTodoModel).toList();
+    } catch (e) {
+      throw const CacheException('Erro ao buscar todas as tarefas do usuário');
+    }
+  }
+
+  @override
+  Future<List<TodoModel>> getAllCachedTodos() async {
+    try {
+      final result = await _db.query('todos', orderBy: 'id ASC');
+      return result.map(_mapToTodoModel).toList();
+    } catch (e) {
+      throw const CacheException('Erro ao buscar todas as tarefas do cache');
+    }
+  }
+
+  @override
   Future<List<TodoModel>> searchTodos(String query) async {
     try {
       final result = await _db.query(
@@ -175,6 +204,27 @@ class TodoLocalDataSourceImpl implements TodoLocalDataSource {
     final total = Sqflite.firstIntValue(totalResult) ?? 0;
     final completed = Sqflite.firstIntValue(completedResult) ?? 0;
     return (total: total, completed: completed, pending: total - completed);
+  }
+
+  @override
+  Future<Set<int>> getDeletedTodoIds() async {
+    try {
+      final result = await _db.query('deleted_todos', columns: ['id']);
+      return result.map((row) => row['id'] as int).toSet();
+    } catch (e) {
+      throw const CacheException('Erro ao buscar tarefas deletadas');
+    }
+  }
+
+  @override
+  Future<void> markTodoDeleted(int id) async {
+    try {
+      await _db.insert('deleted_todos', {
+        'id': id,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    } catch (e) {
+      throw const CacheException('Erro ao marcar tarefa deletada');
+    }
   }
 
   TodoModel _mapToTodoModel(Map<String, dynamic> map) {

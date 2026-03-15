@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:task_radar/app/core/theme/app_theme.dart';
+import 'package:task_radar/app/core/widgets/app_state_widgets.dart';
 import 'package:task_radar/app/core/widgets/shimmer_block.dart';
 import 'package:task_radar/app/features/dashboard/presentation/bloc/dashboard_cubit.dart';
 
@@ -13,6 +15,7 @@ class DashboardTasksCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isLight = Theme.of(context).brightness == Brightness.light;
 
     if (state.isSummaryLoading) {
       return const ShimmerBlock(height: 220);
@@ -22,26 +25,19 @@ class DashboardTasksCard extends StatelessWidget {
       return Card(
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              Text(
-                state.summaryError!,
-                style: TextStyle(color: theme.colorScheme.error),
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () =>
-                    context.read<DashboardCubit>().refreshSummary(),
-                child: const Text('Tentar novamente'),
-              ),
-            ],
+          child: AppErrorRetry(
+            message: state.summaryError!,
+            centered: false,
+            onRetry: () => context.read<DashboardCubit>().refreshSummary(),
           ),
         ),
       );
     }
 
-    const completedColor = Color(0xFF32D583);
-    final pendingColor = Colors.grey.shade600;
+    final completedColor = theme.appColors.green;
+    final pendingColor = isLight
+        ? theme.appColors.grayLight
+        : theme.appColors.grayLight;
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -120,6 +116,8 @@ class _LegendItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
+
     return Row(
       children: [
         Container(
@@ -131,7 +129,7 @@ class _LegendItem extends StatelessWidget {
         Text(
           '$label: ',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: Colors.grey.shade400,
+            color: isLight ? Colors.black : Colors.white,
           ),
         ),
         Text(

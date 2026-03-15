@@ -40,8 +40,13 @@ O app deve implementar um fluxo completo de autenticação com JWT auth/refresht
 
 **Credenciais de teste:**
 ```
+Admin
 username: emilys
 password: emilyspass
+
+Moderador
+username: oliviaw
+password: oliviawpass
 ```
 
 ---

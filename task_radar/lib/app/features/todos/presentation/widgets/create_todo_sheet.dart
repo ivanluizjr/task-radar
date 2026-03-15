@@ -2,11 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:task_radar/app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:task_radar/app/features/auth/presentation/bloc/auth_state.dart';
+import 'package:task_radar/app/features/todos/domain/entities/todo.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_bloc.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_event.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_state.dart';
+import 'package:task_radar/app/features/todos/presentation/widgets/todo_delete_button.dart';
+import 'package:task_radar/app/features/todos/presentation/widgets/todo_delete_confirmation_dialog.dart';
+import 'package:task_radar/app/features/todos/presentation/widgets/todo_error_snackbar.dart';
 
 void showCreateTodoBottomSheet(BuildContext context) {
+  _showTodoBottomSheet(context);
+}
+
+void showTodoDetailBottomSheet(BuildContext context, Todo todo) {
+  _showTodoBottomSheet(context, todo: todo);
+}
+
+void _showTodoBottomSheet(BuildContext context, {Todo? todo}) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -18,13 +30,15 @@ void showCreateTodoBottomSheet(BuildContext context) {
         BlocProvider.value(value: context.read<TodosBloc>()),
         BlocProvider.value(value: context.read<AuthBloc>()),
       ],
-      child: const CreateTodoSheet(),
+      child: CreateTodoSheet(todo: todo),
     ),
   );
 }
 
 class CreateTodoSheet extends StatefulWidget {
-  const CreateTodoSheet({super.key});
+  final Todo? todo;
+
+  const CreateTodoSheet({super.key, this.todo});
 
   @override
   State<CreateTodoSheet> createState() => _CreateTodoSheetState();
@@ -35,11 +49,25 @@ class _CreateTodoSheetState extends State<CreateTodoSheet> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
   bool _isNameFilled = false;
+  bool _isEditing = false;
+
+  bool get _isViewMode => widget.todo != null && !_isEditing;
+  bool get _isEditMode => widget.todo != null && _isEditing;
+  bool get _isCreateMode => widget.todo == null;
 
   @override
   void initState() {
     super.initState();
     _nameController.addListener(_onNameChanged);
+
+    if (widget.todo != null) {
+      final parts = widget.todo!.todo.split('\n');
+      _nameController.text = parts.first;
+      if (parts.length > 1) {
+        _descriptionController.text = parts.sublist(1).join('\n');
+      }
+      _isNameFilled = true;
+    }
   }
 
   void _onNameChanged() {
@@ -60,13 +88,12 @@ class _CreateTodoSheetState extends State<CreateTodoSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
 
     return BlocListener<TodosBloc, TodosState>(
       listener: (context, state) {
         if (state.errorMessage != null) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+          showTodoErrorSnackBar(context, state.errorMessage!);
         }
       },
       child: Padding(
@@ -93,20 +120,35 @@ class _CreateTodoSheetState extends State<CreateTodoSheet> {
                 ),
               ),
               const SizedBox(height: 20),
-              Text(
-                'Nova tarefa',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
+              if (!_isCreateMode && !_isEditMode) ...[
+                // View mode title
+              ] else if (_isCreateMode) ...[
+                Text(
+                  'Nova tarefa',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
+              ] else ...[
+                Text(
+                  'Editar tarefa',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nome da tarefa',
-                  hintText: 'Digite o nome da tarefa',
+                readOnly: _isViewMode,
+                decoration: InputDecoration(
+                  labelText: _isViewMode ? null : 'Nome da tarefa',
+                  hintText: _isViewMode ? null : 'Digite o nome da tarefa',
                 ),
                 textInputAction: TextInputAction.next,
                 validator: (value) {
@@ -119,21 +161,57 @@ class _CreateTodoSheetState extends State<CreateTodoSheet> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _descriptionController,
+                readOnly: _isViewMode,
                 maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Descrição',
-                  hintText: 'Digite a descrição da tarefa',
+                decoration: InputDecoration(
+                  labelText: _isViewMode ? null : 'Descrição',
+                  hintText: _isViewMode ? null : 'Digite a descrição da tarefa',
                   alignLabelWithHint: true,
                 ),
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _isNameFilled ? _submit : null,
-                child: const Text(
-                  'Criar tarefa',
-                  style: TextStyle(fontWeight: FontWeight.w500),
+              if (_isViewMode) ...[
+                ElevatedButton(
+                  onPressed: () => setState(() => _isEditing = true),
+                  child: Text(
+                    'Editar tarefa',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: isLight ? Colors.white : Colors.black,
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 8),
+                TodoDeleteButton(
+                  onPressed: () => showTodoDeleteConfirmationDialog(
+                    context: context,
+                    onConfirm: () {
+                      context.read<TodosBloc>().add(
+                        DeleteTodoRequested(widget.todo!.id),
+                      );
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ),
+              ] else if (_isEditMode)
+                ElevatedButton(
+                  onPressed: _isNameFilled ? _submitEdit : null,
+                  child: const Text(
+                    'Salvar',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                )
+              else
+                ElevatedButton(
+                  onPressed: _isNameFilled ? _submit : null,
+                  child: Text(
+                    'Criar tarefa',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w500,
+                      color: isLight ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
@@ -153,6 +231,20 @@ class _CreateTodoSheetState extends State<CreateTodoSheet> {
 
     context.read<TodosBloc>().add(
       CreateTodoRequested(todo: todoText, userId: userId),
+    );
+
+    Navigator.of(context).pop();
+  }
+
+  void _submitEdit() {
+    if (!_formKey.currentState!.validate()) return;
+
+    final name = _nameController.text.trim();
+    final description = _descriptionController.text.trim();
+    final todoText = description.isNotEmpty ? '$name\n$description' : name;
+
+    context.read<TodosBloc>().add(
+      UpdateTodoRequested(id: widget.todo!.id, todo: todoText),
     );
 
     Navigator.of(context).pop();

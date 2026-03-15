@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:task_radar/app/core/theme/app_theme.dart';
 import 'package:task_radar/app/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:task_radar/app/features/auth/presentation/bloc/auth_state.dart';
+import 'package:task_radar/app/features/dashboard/presentation/bloc/dashboard_cubit.dart';
 
 class MainShell extends StatelessWidget {
   final Widget child;
@@ -13,10 +15,12 @@ class MainShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authState = context.watch<AuthBloc>().state;
-    final isAdmin = authState is AuthAuthenticated && authState.user.isAdmin;
+    final isAdmin =
+        (authState is AuthAuthenticated && authState.user.isAdmin) ||
+        (authState is AuthRefreshing && authState.user.isAdmin);
     final theme = Theme.of(context);
     final iconColor = theme.iconTheme.color ?? Colors.white;
-    final selectedColor = theme.colorScheme.primary;
+    final selectedColor = Colors.white;
 
     Widget svgIcon(String asset, {bool selected = false}) {
       return SvgPicture.asset(
@@ -32,45 +36,54 @@ class MainShell extends StatelessWidget {
 
     return Scaffold(
       body: child,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _calculateSelectedIndex(context),
-        onDestinationSelected: (index) =>
-            _onItemTapped(index, context, isAdmin),
-        destinations: [
-          NavigationDestination(
-            icon: svgIcon('assets/images/icon_home.svg'),
-            selectedIcon: svgIcon(
-              'assets/images/icon_home.svg',
-              selected: true,
-            ),
-            label: 'Dashboard',
-          ),
-          NavigationDestination(
-            icon: svgIcon('assets/images/icon_add_check.svg'),
-            selectedIcon: svgIcon(
-              'assets/images/icon_add_check.svg',
-              selected: true,
-            ),
-            label: 'Tarefas',
-          ),
-          if (isAdmin)
-            NavigationDestination(
-              icon: svgIcon('assets/images/icon_group.svg'),
-              selectedIcon: svgIcon(
-                'assets/images/icon_group.svg',
-                selected: true,
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(100),
+          child: NavigationBar(
+            height: 84,
+            backgroundColor: theme.colorScheme.surface,
+            indicatorColor: theme.appColors.grayLight,
+            selectedIndex: _calculateSelectedIndex(context),
+            onDestinationSelected: (index) =>
+                _onItemTapped(index, context, isAdmin),
+            destinations: [
+              NavigationDestination(
+                icon: svgIcon('assets/images/icon_home.svg'),
+                selectedIcon: svgIcon(
+                  'assets/images/icon_home.svg',
+                  selected: true,
+                ),
+                label: 'Início',
               ),
-              label: 'Usuários',
-            ),
-          NavigationDestination(
-            icon: svgIcon('assets/images/icon_account.svg'),
-            selectedIcon: svgIcon(
-              'assets/images/icon_account.svg',
-              selected: true,
-            ),
-            label: 'Perfil',
+              NavigationDestination(
+                icon: svgIcon('assets/images/icon_add_check.svg'),
+                selectedIcon: svgIcon(
+                  'assets/images/icon_add_check.svg',
+                  selected: true,
+                ),
+                label: 'Tarefas',
+              ),
+              if (isAdmin)
+                NavigationDestination(
+                  icon: svgIcon('assets/images/icon_group.svg'),
+                  selectedIcon: svgIcon(
+                    'assets/images/icon_group.svg',
+                    selected: true,
+                  ),
+                  label: 'Usuários',
+                ),
+              NavigationDestination(
+                icon: svgIcon('assets/images/icon_account.svg'),
+                selectedIcon: svgIcon(
+                  'assets/images/icon_account.svg',
+                  selected: true,
+                ),
+                label: 'Perfil',
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -91,6 +104,8 @@ class MainShell extends StatelessWidget {
     switch (index) {
       case 0:
         context.go('/dashboard');
+        // Sempre relê o banco local para refletir toggles feitos em Tarefas
+        context.read<DashboardCubit>().refreshSummary();
       case 1:
         context.go('/todos');
       case 2:

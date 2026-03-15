@@ -70,15 +70,22 @@ class TodosBloc extends Bloc<TodosEvent, TodosState> {
           errorMessage: failure.message,
         ),
       ),
-      (data) => emit(
-        state.copyWith(
+      (data) {
+        final nextState = state.copyWith(
           status: TodosStatus.loaded,
           allTodos: data.todos,
           total: data.total,
           currentSkip: _pageSize,
           hasReachedMax: data.todos.length >= data.total,
-        ),
-      ),
+        );
+        emit(nextState);
+        // Se há filtro ativo e poucos itens visíveis, carrega próxima página silenciosamente
+        if (!nextState.hasReachedMax &&
+            nextState.filter != TodoFilter.all &&
+            nextState.filteredTodos.length < _pageSize) {
+          add(const LoadMoreTodos(silent: true));
+        }
+      },
     );
   }
 
@@ -86,9 +93,16 @@ class TodosBloc extends Bloc<TodosEvent, TodosState> {
     LoadMoreTodos event,
     Emitter<TodosState> emit,
   ) async {
-    if (state.hasReachedMax || state.status == TodosStatus.loading) return;
+    if (state.hasReachedMax ||
+        state.status == TodosStatus.loading ||
+        state.searchQuery.isNotEmpty) {
+      return;
+    }
 
-    emit(state.copyWith(status: TodosStatus.loading));
+    // Cargas disparadas pelo usuário (scroll) mostram spinner; auto-cargas são silenciosas
+    if (!event.silent) {
+      emit(state.copyWith(status: TodosStatus.loading));
+    }
 
     final result = state.userId != null
         ? await _getTodosByUserUseCase(
@@ -111,15 +125,20 @@ class TodosBloc extends Bloc<TodosEvent, TodosState> {
       ),
       (data) {
         final allTodos = [...state.allTodos, ...data.todos];
-        emit(
-          state.copyWith(
-            status: TodosStatus.loaded,
-            allTodos: allTodos,
-            total: data.total,
-            currentSkip: state.currentSkip + _pageSize,
-            hasReachedMax: allTodos.length >= data.total,
-          ),
+        final nextState = state.copyWith(
+          status: TodosStatus.loaded,
+          allTodos: allTodos,
+          total: data.total,
+          currentSkip: state.currentSkip + _pageSize,
+          hasReachedMax: allTodos.length >= data.total,
         );
+        emit(nextState);
+        // Continua carregando silenciosamente se filtro ativo ainda tem poucos resultados
+        if (!nextState.hasReachedMax &&
+            nextState.filter != TodoFilter.all &&
+            nextState.filteredTodos.length < _pageSize) {
+          add(const LoadMoreTodos(silent: true));
+        }
       },
     );
   }
@@ -168,29 +187,53 @@ class TodosBloc extends Bloc<TodosEvent, TodosState> {
     DeleteTodoRequested event,
     Emitter<TodosState> emit,
   ) async {
+    // Optimistic: remove immediately
+    final previousTodos = List.of(state.allTodos);
+    final previousTotal = state.total;
+    final updatedTodos = state.allTodos.where((t) => t.id != event.id).toList();
+    emit(state.copyWith(allTodos: updatedTodos, total: state.total - 1));
+
     final result = await _deleteTodoUseCase(event.id);
 
-    result.fold(
-      (failure) => emit(state.copyWith(errorMessage: failure.message)),
-      (_) {
-        final updatedTodos = state.allTodos
-            .where((t) => t.id != event.id)
-            .toList();
-        emit(state.copyWith(allTodos: updatedTodos, total: state.total - 1));
-      },
-    );
+    result.fold((failure) {
+      // Rollback on failure
+      emit(
+        state.copyWith(
+          allTodos: previousTodos,
+          total: previousTotal,
+          errorMessage: failure.message,
+        ),
+      );
+    }, (_) {});
   }
 
   Future<void> _onToggleTodoStatus(
     ToggleTodoStatus event,
     Emitter<TodosState> emit,
   ) async {
+    // Optimistic: toggle immediately
+    final previousTodos = List.of(state.allTodos);
+    final optimisticTodos = state.allTodos
+        .map(
+          (t) => t.id == event.id ? t.copyWith(completed: event.completed) : t,
+        )
+        .toList();
+    emit(state.copyWith(allTodos: optimisticTodos));
+
     final result = await _updateTodoUseCase(
       UpdateTodoParams(id: event.id, completed: event.completed),
     );
 
     result.fold(
-      (failure) => emit(state.copyWith(errorMessage: failure.message)),
+      (failure) {
+        // Rollback on failure
+        emit(
+          state.copyWith(
+            allTodos: previousTodos,
+            errorMessage: failure.message,
+          ),
+        );
+      },
       (updatedTodo) {
         final updatedTodos = state.allTodos
             .map((t) => t.id == updatedTodo.id ? updatedTodo : t)
@@ -201,7 +244,14 @@ class TodosBloc extends Bloc<TodosEvent, TodosState> {
   }
 
   void _onFilterTodos(FilterTodos event, Emitter<TodosState> emit) {
-    emit(state.copyWith(filter: event.filter));
+    final nextState = state.copyWith(filter: event.filter);
+    emit(nextState);
+    // Ao aplicar filtro, auto-carrega silenciosamente se há poucos itens visíveis
+    if (event.filter != TodoFilter.all &&
+        !nextState.hasReachedMax &&
+        nextState.filteredTodos.length < _pageSize) {
+      add(const LoadMoreTodos(silent: true));
+    }
   }
 
   void _onSearchTodos(SearchTodos event, Emitter<TodosState> emit) {
@@ -213,6 +263,12 @@ class TodosBloc extends Bloc<TodosEvent, TodosState> {
   }
 
   void _onSortTodos(SortTodosRequested event, Emitter<TodosState> emit) {
-    emit(state.copyWith(sortBy: event.sortBy, sortOrder: event.order));
+    emit(
+      state.copyWith(
+        sortBy: event.sortBy,
+        sortOrder: event.order,
+        sortVersion: state.sortVersion + 1,
+      ),
+    );
   }
 }

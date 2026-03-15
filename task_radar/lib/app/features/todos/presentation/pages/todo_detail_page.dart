@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:task_radar/app/features/todos/domain/entities/todo.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_bloc.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_event.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_state.dart';
+import 'package:task_radar/app/features/todos/presentation/widgets/todo_delete_button.dart';
+import 'package:task_radar/app/features/todos/presentation/widgets/todo_delete_confirmation_dialog.dart';
+import 'package:task_radar/app/features/todos/presentation/widgets/todo_error_snackbar.dart';
 
 class TodoDetailPage extends StatelessWidget {
   final int todoId;
@@ -14,33 +15,19 @@ class TodoDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return BlocConsumer<TodosBloc, TodosState>(
       listener: (context, state) {
         if (state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.errorMessage!),
-              backgroundColor: theme.colorScheme.error,
-            ),
-          );
+          showTodoErrorSnackBar(context, state.errorMessage!);
         }
       },
       builder: (context, state) {
+        final theme = Theme.of(context);
         final todo = state.allTodos.where((t) => t.id == todoId).firstOrNull;
 
         if (todo == null) {
           return Scaffold(
-            appBar: AppBar(
-              title: const Text('Tarefas'),
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.close),
-                  onPressed: () => context.pop(),
-                ),
-              ],
-            ),
+            appBar: _buildDetailAppBar(context),
             body: const Center(child: Text('Tarefa não encontrada')),
           );
         }
@@ -52,15 +39,7 @@ class TodoDetailPage extends StatelessWidget {
             : null;
 
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('Tarefas'),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => context.pop(),
-              ),
-            ],
-          ),
+          appBar: _buildDetailAppBar(context),
           body: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -86,20 +65,15 @@ class TodoDetailPage extends StatelessWidget {
                 const Spacer(),
                 SizedBox(
                   width: double.infinity,
-                  child: TextButton.icon(
-                    onPressed: () => _confirmDelete(context, todo),
-                    icon: SvgPicture.asset(
-                      'assets/images/icon_delete.svg',
-                      width: 20,
-                      height: 20,
-                      colorFilter: ColorFilter.mode(
-                        theme.colorScheme.error,
-                        BlendMode.srcIn,
-                      ),
-                    ),
-                    label: Text(
-                      'Excluir',
-                      style: TextStyle(color: theme.colorScheme.error),
+                  child: TodoDeleteButton(
+                    onPressed: () => showTodoDeleteConfirmationDialog(
+                      context: context,
+                      onConfirm: () {
+                        context.read<TodosBloc>().add(
+                          DeleteTodoRequested(todo.id),
+                        );
+                        context.pop();
+                      },
                     ),
                   ),
                 ),
@@ -111,33 +85,15 @@ class TodoDetailPage extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(BuildContext context, Todo todo) {
-    final theme = Theme.of(context);
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Excluir tarefa?'),
-        content: const Text(
-          'A tarefa desaparecerá e não poderá ser recuperada.',
+  AppBar _buildDetailAppBar(BuildContext context) {
+    return AppBar(
+      title: const Text('Tarefas'),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => context.pop(),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(dialogContext).pop();
-              context.read<TodosBloc>().add(DeleteTodoRequested(todo.id));
-              context.pop();
-            },
-            child: Text(
-              'Excluir',
-              style: TextStyle(color: theme.colorScheme.error),
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 }

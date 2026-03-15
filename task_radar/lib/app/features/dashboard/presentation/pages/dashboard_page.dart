@@ -30,7 +30,7 @@ class _DashboardPageState extends State<DashboardPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
         elevation: 0,
         onPressed: () => showCreateTodoBottomSheet(context),
-        child: const Icon(Icons.add),
+        child: Icon(Icons.add),
       ),
       body: BlocBuilder<DashboardCubit, DashboardState>(
         builder: (context, state) {

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_bloc.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_event.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_state.dart';
+import 'package:task_radar/app/features/todos/presentation/widgets/todo_error_snackbar.dart';
 
 class TodoFormPage extends StatefulWidget {
   final int? todoId;
@@ -41,9 +42,7 @@ class _TodoFormPageState extends State<TodoFormPage> {
       body: BlocListener<TodosBloc, TodosState>(
         listener: (context, state) {
           if (state.errorMessage != null) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(state.errorMessage!)));
+            showTodoErrorSnackBar(context, state.errorMessage!);
           }
         },
         child: Padding(

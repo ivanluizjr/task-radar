@@ -73,6 +73,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     GetCurrentUserRequested event,
     Emitter<AuthState> emit,
   ) async {
+    // Se já autenticado, usa AuthRefreshing para manter dados do usuário
+    // visíveis no resto do app (navbar, etc.) enquanto recarrega o perfil
+    if (state is AuthAuthenticated) {
+      emit(AuthRefreshing((state as AuthAuthenticated).user));
+    } else {
+      emit(const AuthLoading());
+    }
     final result = await _getCurrentUserUseCase(const NoParams());
     result.fold(
       (failure) => emit(AuthError(failure.message)),

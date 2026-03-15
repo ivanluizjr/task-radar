@@ -17,7 +17,23 @@ class LoadMoreUsers extends UsersEvent {
   const LoadMoreUsers();
 }
 
+class SearchUsers extends UsersEvent {
+  final String query;
+  const SearchUsers(this.query);
+  @override
+  List<Object?> get props => [query];
+}
+
+class FilterUsers extends UsersEvent {
+  final UserFilter filter;
+  const FilterUsers(this.filter);
+  @override
+  List<Object?> get props => [filter];
+}
+
 enum UsersStatus { initial, loading, loaded, error }
+
+enum UserFilter { all, admin, moderator }
 
 class UsersState extends Equatable {
   final List<User> users;
@@ -26,6 +42,8 @@ class UsersState extends Equatable {
   final int total;
   final int currentSkip;
   final String? errorMessage;
+  final String searchQuery;
+  final UserFilter filter;
 
   const UsersState({
     this.users = const [],
@@ -34,7 +52,34 @@ class UsersState extends Equatable {
     this.total = 0,
     this.currentSkip = 0,
     this.errorMessage,
+    this.searchQuery = '',
+    this.filter = UserFilter.all,
   });
+
+  List<User> get filteredUsers {
+    var result = List<User>.from(users);
+
+    switch (filter) {
+      case UserFilter.admin:
+        result = result.where((u) => u.isAdmin).toList();
+      case UserFilter.moderator:
+        result = result.where((u) => !u.isAdmin).toList();
+      case UserFilter.all:
+        break;
+    }
+
+    if (searchQuery.isNotEmpty) {
+      result = result
+          .where(
+            (u) =>
+                u.fullName.toLowerCase().contains(searchQuery.toLowerCase()) ||
+                u.username.toLowerCase().contains(searchQuery.toLowerCase()),
+          )
+          .toList();
+    }
+
+    return result;
+  }
 
   UsersState copyWith({
     List<User>? users,
@@ -43,6 +88,8 @@ class UsersState extends Equatable {
     int? total,
     int? currentSkip,
     String? errorMessage,
+    String? searchQuery,
+    UserFilter? filter,
   }) {
     return UsersState(
       users: users ?? this.users,
@@ -51,6 +98,8 @@ class UsersState extends Equatable {
       total: total ?? this.total,
       currentSkip: currentSkip ?? this.currentSkip,
       errorMessage: errorMessage,
+      searchQuery: searchQuery ?? this.searchQuery,
+      filter: filter ?? this.filter,
     );
   }
 
@@ -62,6 +111,8 @@ class UsersState extends Equatable {
     total,
     currentSkip,
     errorMessage,
+    searchQuery,
+    filter,
   ];
 }
 
@@ -75,6 +126,8 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
       super(const UsersState()) {
     on<LoadUsers>(_onLoadUsers);
     on<LoadMoreUsers>(_onLoadMoreUsers);
+    on<SearchUsers>(_onSearchUsers);
+    on<FilterUsers>(_onFilterUsers);
   }
 
   Future<void> _onLoadUsers(LoadUsers event, Emitter<UsersState> emit) async {
@@ -114,7 +167,12 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
     LoadMoreUsers event,
     Emitter<UsersState> emit,
   ) async {
-    if (state.hasReachedMax || state.status == UsersStatus.loading) return;
+    if (state.hasReachedMax ||
+        state.status == UsersStatus.loading ||
+        state.searchQuery.isNotEmpty ||
+        state.filter != UserFilter.all) {
+      return;
+    }
 
     emit(state.copyWith(status: UsersStatus.loading));
 
@@ -142,5 +200,13 @@ class UsersBloc extends Bloc<UsersEvent, UsersState> {
         );
       },
     );
+  }
+
+  void _onSearchUsers(SearchUsers event, Emitter<UsersState> emit) {
+    emit(state.copyWith(searchQuery: event.query));
+  }
+
+  void _onFilterUsers(FilterUsers event, Emitter<UsersState> emit) {
+    emit(state.copyWith(filter: event.filter));
   }
 }

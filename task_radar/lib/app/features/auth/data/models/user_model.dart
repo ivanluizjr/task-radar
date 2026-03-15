@@ -4,6 +4,28 @@ import 'package:task_radar/app/features/auth/domain/entities/user.dart';
 part 'user_model.freezed.dart';
 part 'user_model.g.dart';
 
+Object? _userModelReadCompanyName(Map json, String key) {
+  final company = json['company'];
+  if (company is Map<String, dynamic>) {
+    return company['name'];
+  }
+  if (company is Map) {
+    return company['name'];
+  }
+  return null;
+}
+
+Object? _userModelReadDepartment(Map json, String key) {
+  final company = json['company'];
+  if (company is Map<String, dynamic>) {
+    return company['department'];
+  }
+  if (company is Map) {
+    return company['department'];
+  }
+  return null;
+}
+
 @freezed
 abstract class UserModel with _$UserModel {
   const UserModel._();
@@ -16,6 +38,8 @@ abstract class UserModel with _$UserModel {
     required String lastName,
     String? image,
     @Default('moderator') String role,
+    @JsonKey(readValue: _userModelReadCompanyName) String? companyName,
+    @JsonKey(readValue: _userModelReadDepartment) String? department,
   }) = _UserModel;
 
   factory UserModel.fromJson(Map<String, dynamic> json) =>
@@ -29,6 +53,8 @@ abstract class UserModel with _$UserModel {
     lastName: lastName,
     image: image,
     role: role,
+    companyName: companyName,
+    department: department,
   );
 
   factory UserModel.fromEntity(User user) => UserModel(
@@ -39,5 +65,7 @@ abstract class UserModel with _$UserModel {
     lastName: user.lastName,
     image: user.image,
     role: user.role,
+    companyName: user.companyName,
+    department: user.department,
   );
 }

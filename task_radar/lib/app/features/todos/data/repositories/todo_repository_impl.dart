@@ -30,9 +30,10 @@ class TodoRepositoryImpl implements TodoRepository {
           limit: limit,
           skip: skip,
         );
-        await _localDataSource.cacheTodos(response.todos);
+        final mergedTodos = await _mergeRemoteWithLocal(response.todos);
+        await _localDataSource.cacheTodos(mergedTodos);
         return Right((
-          todos: response.todos.map((m) => m.toEntity()).toList(),
+          todos: mergedTodos.map((m) => m.toEntity()).toList(),
           total: response.total,
         ));
       } else {
@@ -72,40 +73,46 @@ class TodoRepositoryImpl implements TodoRepository {
     required int skip,
   }) async {
     try {
-      if (await _networkInfo.isConnected) {
-        final response = await _remoteDataSource.getTodosByUser(
+      // Na primeira página, busca tudo remotamente e popula o cache com o
+      // conjunto completo (remote + local-only), garantindo que todos criados
+      // localmente (que a API não persiste) apareçam na lista igual ao dashboard.
+      if (skip == 0 && await _networkInfo.isConnected) {
+        final remoteTodos = await _fetchAllRemoteTodosByUser(userId);
+        final mergedTodos = await _mergeAllUserTodosWithLocal(
           userId: userId,
-          limit: limit,
-          skip: skip,
+          remoteTodos: remoteTodos,
         );
-        await _localDataSource.cacheTodos(response.todos);
+        await _localDataSource.cacheTodos(mergedTodos);
+        final page = mergedTodos.skip(skip).take(limit).toList();
         return Right((
-          todos: response.todos.map((m) => m.toEntity()).toList(),
-          total: response.total,
-        ));
-      } else {
-        final cachedTodos = await _localDataSource.getTodosByUser(
-          userId,
-          limit: limit,
-          skip: skip,
-        );
-        final total = await _localDataSource.getTotalCount(userId: userId);
-        return Right((
-          todos: cachedTodos.map((m) => m.toEntity()).toList(),
-          total: total,
+          todos: page.map((m) => m.toEntity()).toList(),
+          total: mergedTodos.length,
         ));
       }
+
+      // Páginas seguintes (ou offline): lê do cache já populado acima,
+      // filtrando os deleted e paginando em memória.
+      final deletedIds = await _localDataSource.getDeletedTodoIds();
+      final allCached = await _localDataSource.getAllTodosByUser(userId);
+      final filtered = allCached
+          .where((t) => !deletedIds.contains(t.id))
+          .toList();
+      final page = filtered.skip(skip).take(limit).toList();
+      return Right((
+        todos: page.map((m) => m.toEntity()).toList(),
+        total: filtered.length,
+      ));
     } on ServerException catch (e) {
       try {
-        final cachedTodos = await _localDataSource.getTodosByUser(
-          userId,
-          limit: limit,
-          skip: skip,
-        );
-        final total = await _localDataSource.getTotalCount(userId: userId);
+        final deletedIds = await _localDataSource.getDeletedTodoIds();
+        final allCached = await _localDataSource.getAllTodosByUser(userId);
+        final filtered = allCached
+            .where((t) => !deletedIds.contains(t.id))
+            .toList();
+        final page = filtered.skip(skip).take(limit).toList();
         return Right((
-          todos: cachedTodos.map((m) => m.toEntity()).toList(),
-          total: total,
+          todos: page.map((m) => m.toEntity()).toList(),
+          total: filtered.length,
         ));
       } catch (_) {
         return Left(ServerFailure(e.message));
@@ -205,6 +212,7 @@ class TodoRepositoryImpl implements TodoRepository {
       }
 
       await _localDataSource.deleteTodo(id);
+      await _localDataSource.markTodoDeleted(id);
       return Right(existing.toEntity());
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
@@ -215,10 +223,105 @@ class TodoRepositoryImpl implements TodoRepository {
   Future<Either<Failure, ({int total, int completed, int pending})>>
   getTodoSummary(int userId) async {
     try {
-      final summary = await _localDataSource.getSummary(userId);
-      return Right(summary);
+      final todos = await _getSummaryTodos(userId);
+      final total = todos.length;
+      final completed = todos.where((todo) => todo.completed).length;
+      return Right((
+        total: total,
+        completed: completed,
+        pending: total - completed,
+      ));
+    } on CacheException catch (e) {
+      return Left(CacheFailure(e.message));
     } catch (e) {
       return Left(CacheFailure('Erro ao buscar resumo: ${e.toString()}'));
     }
+  }
+
+  Future<List<TodoModel>> _getSummaryTodos(int userId) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final remoteTodos = await _fetchAllRemoteTodosByUser(userId);
+        final mergedTodos = await _mergeAllUserTodosWithLocal(
+          userId: userId,
+          remoteTodos: remoteTodos,
+        );
+        await _localDataSource.cacheTodos(mergedTodos);
+        return mergedTodos;
+      } on ServerException {
+        return _localDataSource.getAllTodosByUser(userId);
+      }
+    }
+
+    return _localDataSource.getAllTodosByUser(userId);
+  }
+
+  Future<List<TodoModel>> _fetchAllRemoteTodosByUser(int userId) async {
+    final allRemoteTodos = <TodoModel>[];
+    var skip = 0;
+
+    while (true) {
+      final response = await _remoteDataSource.getTodosByUser(
+        userId: userId,
+        limit: 100,
+        skip: skip,
+      );
+      allRemoteTodos.addAll(response.todos);
+      skip += response.todos.length;
+      if (skip >= response.total || response.todos.isEmpty) {
+        break;
+      }
+    }
+
+    return allRemoteTodos;
+  }
+
+  Future<List<TodoModel>> _mergeAllUserTodosWithLocal({
+    required int userId,
+    required List<TodoModel> remoteTodos,
+  }) async {
+    final deletedIds = await _localDataSource.getDeletedTodoIds();
+    final localTodos = await _localDataSource.getAllTodosByUser(userId);
+    final localTodosById = {for (final todo in localTodos) todo.id: todo};
+    final mergedTodosById = <int, TodoModel>{};
+
+    for (final remoteTodo in remoteTodos) {
+      if (deletedIds.contains(remoteTodo.id)) {
+        continue;
+      }
+      mergedTodosById[remoteTodo.id] =
+          localTodosById[remoteTodo.id] ?? remoteTodo;
+    }
+
+    for (final localTodo in localTodos) {
+      if (deletedIds.contains(localTodo.id)) {
+        continue;
+      }
+      mergedTodosById.putIfAbsent(localTodo.id, () => localTodo);
+    }
+
+    return mergedTodosById.values.toList();
+  }
+
+  Future<List<TodoModel>> _mergeRemoteWithLocal(
+    List<TodoModel> remoteTodos,
+  ) async {
+    final deletedIds = await _localDataSource.getDeletedTodoIds();
+    final mergedTodos = <TodoModel>[];
+
+    for (final remoteTodo in remoteTodos) {
+      if (deletedIds.contains(remoteTodo.id)) {
+        continue;
+      }
+
+      final localTodo = await _localDataSource.getTodoById(remoteTodo.id);
+      if (localTodo != null) {
+        mergedTodos.add(localTodo);
+      } else {
+        mergedTodos.add(remoteTodo);
+      }
+    }
+
+    return mergedTodos;
   }
 }
