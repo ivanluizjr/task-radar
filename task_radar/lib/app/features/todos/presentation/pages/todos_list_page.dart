@@ -55,7 +55,6 @@ class _TodosListPageState extends State<TodosListPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isLight = theme.brightness == Brightness.light;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Tarefas')),
@@ -67,9 +66,6 @@ class _TodosListPageState extends State<TodosListPage> {
               return AppSearchField(
                 controller: _searchController,
                 hintText: 'Pesquisar tarefas',
-                hintStyle: TextStyle(
-                  color: isLight ? Colors.black : Colors.white,
-                ),
                 hasText: state.searchQuery.isNotEmpty,
                 onChanged: (value) =>
                     context.read<TodosBloc>().add(SearchTodos(value)),
@@ -99,7 +95,7 @@ class _TodosListPageState extends State<TodosListPage> {
                       Text(
                         'Ordenar por:',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: isLight ? Colors.black : Colors.white,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -113,7 +109,7 @@ class _TodosListPageState extends State<TodosListPage> {
                           ),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey.shade700),
+                            border: Border.all(color: theme.dividerColor),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -125,7 +121,10 @@ class _TodosListPageState extends State<TodosListPage> {
                               const SizedBox(width: 4),
                               SvgPicture.asset(
                                 'assets/images/icon_arrow_dow.svg',
-                                color: isLight ? Colors.black : Colors.white,
+                                colorFilter: ColorFilter.mode(
+                                  theme.colorScheme.onSurface,
+                                  BlendMode.srcIn,
+                                ),
                               ),
                             ],
                           ),
@@ -241,33 +240,32 @@ class _TodosListPageState extends State<TodosListPage> {
                     children: [
                       if (showCompletedFirst) ...[
                         if (completedTodos.isNotEmpty) ...[
-                          _SectionHeader(title: 'Concluídas', isLight: isLight),
+                          const _SectionHeader(title: 'Concluídas'),
                           ...completedTodos.map(
                             (todo) => TodoItemCard(todo: todo),
                           ),
                         ],
                         if (pendingTodos.isNotEmpty) ...[
-                          _SectionHeader(title: 'Pendentes', isLight: isLight),
+                          const _SectionHeader(title: 'Pendentes'),
                           ...pendingTodos.map(
                             (todo) => TodoItemCard(todo: todo),
                           ),
                         ],
                       ] else ...[
                         if (pendingTodos.isNotEmpty) ...[
-                          _SectionHeader(title: 'Pendentes', isLight: isLight),
+                          const _SectionHeader(title: 'Pendentes'),
                           ...pendingTodos.map(
                             (todo) => TodoItemCard(todo: todo),
                           ),
                         ],
                         if (completedTodos.isNotEmpty) ...[
-                          _SectionHeader(title: 'Concluídas', isLight: isLight),
+                          const _SectionHeader(title: 'Concluídas'),
                           ...completedTodos.map(
                             (todo) => TodoItemCard(todo: todo),
                           ),
                         ],
                       ],
-                      // Mostra footer: sempre no filtro 'todas' enquanto há mais páginas
-                      // ou quando o usuário acionou manualmente (status loading em qualquer filtro)
+
                       if (state.searchQuery.isEmpty &&
                           (!state.hasReachedMax &&
                                   state.filter == TodoFilter.all ||
@@ -285,7 +283,7 @@ class _TodosListPageState extends State<TodosListPage> {
         backgroundColor: theme.colorScheme.primary,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
         elevation: 0,
-        foregroundColor: Colors.black,
+        foregroundColor: theme.colorScheme.onPrimary,
         onPressed: () => showCreateTodoBottomSheet(context),
         child: Icon(Icons.add),
       ),
@@ -322,9 +320,8 @@ class _SortOption {
 
 class _SectionHeader extends StatelessWidget {
   final String title;
-  final bool isLight;
 
-  const _SectionHeader({required this.title, required this.isLight});
+  const _SectionHeader({required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -333,7 +330,7 @@ class _SectionHeader extends StatelessWidget {
       child: Text(
         title,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: isLight ? Colors.black : Colors.white,
+          color: Theme.of(context).textTheme.bodySmall?.color,
           fontWeight: FontWeight.w500,
         ),
       ),

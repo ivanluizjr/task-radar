@@ -54,6 +54,7 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.3
 
   
   build_runner: ^2.4.15
@@ -68,6 +69,12 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/images/icon_task_radar.png
+  remove_alpha_ios: true
   #         style: italic
   #   - family: Trajan Pro
   #     fonts:

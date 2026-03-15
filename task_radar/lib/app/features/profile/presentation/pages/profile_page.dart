@@ -57,10 +57,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     ? const Color(0xFF381E72)
                     : theme.appColors.purple.withValues(alpha: 0.18);
                 final activeBg = theme.colorScheme.primary;
-                final activeIconColor = isDark ? Colors.black : Colors.white;
-                final inactiveIconColor = isDark
-                    ? Colors.white.withValues(alpha: 0.45)
-                    : theme.appColors.purple.withValues(alpha: 0.5);
                 final logoutColor = isDark
                     ? Colors.white
                     : theme.colorScheme.onSurface;
@@ -96,12 +92,14 @@ class _ProfilePageState extends State<ProfilePage> {
                                         : activeBg,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: Icon(
-                                    Icons.light_mode_rounded,
-                                    size: 15,
-                                    color: isDark
-                                        ? inactiveIconColor
-                                        : activeIconColor,
+                                  child: Center(
+                                    child: SvgPicture.asset(
+                                      isDark
+                                          ? 'assets/images/icon_unselecte_light.svg'
+                                          : 'assets/images/icon_selected_light.svg',
+                                      width: 15,
+                                      height: 15,
+                                    ),
                                   ),
                                 ),
                                 const SizedBox(width: 2),
@@ -115,12 +113,14 @@ class _ProfilePageState extends State<ProfilePage> {
                                         : Colors.transparent,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: Icon(
-                                    Icons.dark_mode_rounded,
-                                    size: 15,
-                                    color: isDark
-                                        ? activeIconColor
-                                        : inactiveIconColor,
+                                  child: Center(
+                                    child: SvgPicture.asset(
+                                      isDark
+                                          ? 'assets/images/icon_selected_moon.svg'
+                                          : 'assets/images/icon_unselected_moon.svg',
+                                      width: 17,
+                                      height: 17,
+                                    ),
                                   ),
                                 ),
                               ],

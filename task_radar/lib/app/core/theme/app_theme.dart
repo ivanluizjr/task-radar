@@ -8,6 +8,9 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color grayDark;
   final Color grayLight;
   final Color colorCardList;
+  final Color shimmerBase;
+  final Color shimmerHighlight;
+  final Color shimmerSurface;
 
   const AppColors({
     required this.green,
@@ -16,6 +19,9 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.grayDark,
     required this.grayLight,
     required this.colorCardList,
+    required this.shimmerBase,
+    required this.shimmerHighlight,
+    required this.shimmerSurface,
   });
 
   @override
@@ -26,6 +32,9 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? grayDark,
     Color? grayLight,
     Color? colorCardList,
+    Color? shimmerBase,
+    Color? shimmerHighlight,
+    Color? shimmerSurface,
   }) {
     return AppColors(
       green: green ?? this.green,
@@ -34,6 +43,9 @@ class AppColors extends ThemeExtension<AppColors> {
       grayDark: grayDark ?? this.grayDark,
       grayLight: grayLight ?? this.grayLight,
       colorCardList: colorCardList ?? this.colorCardList,
+      shimmerBase: shimmerBase ?? this.shimmerBase,
+      shimmerHighlight: shimmerHighlight ?? this.shimmerHighlight,
+      shimmerSurface: shimmerSurface ?? this.shimmerSurface,
     );
   }
 
@@ -47,6 +59,13 @@ class AppColors extends ThemeExtension<AppColors> {
       grayDark: Color.lerp(grayDark, other.grayDark, t)!,
       grayLight: Color.lerp(grayLight, other.grayLight, t)!,
       colorCardList: Color.lerp(colorCardList, other.colorCardList, t)!,
+      shimmerBase: Color.lerp(shimmerBase, other.shimmerBase, t)!,
+      shimmerHighlight: Color.lerp(
+        shimmerHighlight,
+        other.shimmerHighlight,
+        t,
+      )!,
+      shimmerSurface: Color.lerp(shimmerSurface, other.shimmerSurface, t)!,
     );
   }
 
@@ -57,6 +76,9 @@ class AppColors extends ThemeExtension<AppColors> {
     grayDark: Color(0xFF2B2930),
     grayLight: Color(0xFF4A4458),
     colorCardList: Color(0xFF121418),
+    shimmerBase: Color(0xFF424242),
+    shimmerHighlight: Color(0xFF616161),
+    shimmerSurface: Color(0xFF2B2930),
   );
 
   static const light = AppColors(
@@ -66,6 +88,9 @@ class AppColors extends ThemeExtension<AppColors> {
     grayDark: Color(0xFFE8E0F0),
     grayLight: Color(0xFFE8DEF8),
     colorCardList: Color(0xFFF3EDF7),
+    shimmerBase: Color(0xFFE0E0E0),
+    shimmerHighlight: Color(0xFFF5F5F5),
+    shimmerSurface: Color(0xFFFFFFFF),
   );
 }
 
@@ -125,8 +150,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFFCF6679)),
         ),
-        labelStyle: TextStyle(color: Colors.grey.shade400),
-        hintStyle: TextStyle(color: Colors.grey.shade600),
+        labelStyle: const TextStyle(color: Colors.white70),
+        hintStyle: const TextStyle(color: Colors.white70),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -174,7 +199,7 @@ class AppTheme {
       extensions: const [AppColors.light],
       colorScheme: const ColorScheme.light(
         primary: _primaryLight,
-        onPrimary: Colors.black,
+        onPrimary: Colors.white,
         surface: _surfaceLight,
         onSurface: Colors.black87,
         error: Color(0xFFB00020),
@@ -204,8 +229,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: _primaryLight),
         ),
-        labelStyle: TextStyle(color: Colors.grey.shade700),
-        hintStyle: TextStyle(color: Colors.grey.shade500),
+        labelStyle: const TextStyle(color: Colors.black),
+        hintStyle: const TextStyle(color: Colors.black),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -236,6 +261,10 @@ class AppTheme {
         }),
         checkColor: WidgetStateProperty.all(Colors.black),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+      ),
+      dividerTheme: DividerThemeData(
+        color: Colors.grey.shade400,
+        thickness: 0.5,
       ),
     );
   }

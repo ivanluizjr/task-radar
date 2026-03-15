@@ -15,7 +15,6 @@ class DashboardTasksCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isLight = Theme.of(context).brightness == Brightness.light;
 
     if (state.isSummaryLoading) {
       return const ShimmerBlock(height: 220);
@@ -35,9 +34,7 @@ class DashboardTasksCard extends StatelessWidget {
     }
 
     final completedColor = theme.appColors.green;
-    final pendingColor = isLight
-        ? theme.appColors.grayLight
-        : theme.appColors.grayLight;
+    final pendingColor = theme.appColors.grayLight;
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -116,7 +113,6 @@ class _LegendItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isLight = theme.brightness == Brightness.light;
 
     return Row(
       children: [
@@ -129,7 +125,7 @@ class _LegendItem extends StatelessWidget {
         Text(
           '$label: ',
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: isLight ? Colors.black : Colors.white,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         Text(

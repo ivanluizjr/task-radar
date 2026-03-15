@@ -11,7 +11,6 @@ class DashboardQuoteSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isLight = theme.brightness == Brightness.light;
 
     if (state.isQuoteLoading) {
       return const ShimmerBlock(height: 60);
@@ -35,7 +34,7 @@ class DashboardQuoteSection extends StatelessWidget {
     return Text(
       '"${state.quote!.quote}" — ${state.quote!.author}',
       style: theme.textTheme.bodyMedium?.copyWith(
-        color: isLight ? Colors.black : Colors.white,
+        color: theme.colorScheme.onSurface,
         fontStyle: FontStyle.italic,
       ),
     );

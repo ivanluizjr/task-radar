@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:task_radar/app/core/theme/app_theme.dart';
 import 'package:task_radar/app/core/widgets/app_search_field.dart';
 import 'package:task_radar/app/core/widgets/app_state_widgets.dart';
 import 'package:task_radar/app/features/auth/domain/entities/user.dart';
@@ -51,13 +50,9 @@ class _UsersListPageState extends State<UsersListPage> {
           BlocBuilder<UsersBloc, UsersState>(
             buildWhen: (prev, curr) => prev.searchQuery != curr.searchQuery,
             builder: (context, state) {
-              final isLight = Theme.of(context).brightness == Brightness.light;
               return AppSearchField(
                 controller: _searchController,
                 hintText: 'Pesquisar usuários',
-                hintStyle: TextStyle(
-                  color: isLight ? Colors.black : Colors.white,
-                ),
                 hasText: state.searchQuery.isNotEmpty,
                 onChanged: (value) =>
                     context.read<UsersBloc>().add(SearchUsers(value)),
@@ -182,19 +177,14 @@ class _UserFilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isLight = theme.brightness == Brightness.light;
-    final selectedBackground = isLight
-        ? theme.appColors.grayLight
-        : theme.appColors.grayDark;
+    final selectedBackground = theme.colorScheme.primary;
     final chipBackground = selected ? selectedBackground : Colors.transparent;
     final chipTextColor = selected
-        ? isLight
-              ? Colors.black
-              : Colors.white
-        : (isLight ? Colors.black : Colors.white);
+        ? theme.colorScheme.onPrimary
+        : theme.colorScheme.onSurface;
     final chipBorderColor = selected
         ? selectedBackground
-        : (isLight ? Colors.black : theme.appColors.grayLight);
+        : theme.colorScheme.onSurface.withValues(alpha: 0.5);
 
     return Material(
       color: Colors.transparent,
@@ -233,13 +223,12 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
     return Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 8),
       child: Text(
         title,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: isLight ? Colors.black : Colors.grey.shade400,
+          color: Theme.of(context).textTheme.bodySmall?.color,
           fontWeight: FontWeight.w500,
         ),
       ),

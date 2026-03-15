@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:task_radar/app/core/theme/app_theme.dart';
 
 class ShimmerBlock extends StatelessWidget {
   final double height;
@@ -8,14 +9,14 @@ class ShimmerBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final appColors = Theme.of(context).appColors;
     return Shimmer.fromColors(
-      baseColor: isDark ? Colors.grey.shade800 : Colors.grey.shade300,
-      highlightColor: isDark ? Colors.grey.shade700 : Colors.grey.shade100,
+      baseColor: appColors.shimmerBase,
+      highlightColor: appColors.shimmerHighlight,
       child: Container(
         height: height,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: appColors.shimmerSurface,
           borderRadius: BorderRadius.circular(16),
         ),
       ),

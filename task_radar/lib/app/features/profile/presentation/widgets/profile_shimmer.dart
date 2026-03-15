@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:task_radar/app/core/theme/app_theme.dart';
 
 class ProfileShimmer extends StatelessWidget {
   const ProfileShimmer({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final appColors = Theme.of(context).appColors;
     return SafeArea(
       child: Shimmer.fromColors(
-        baseColor: isDark ? Colors.grey.shade800 : Colors.grey.shade300,
-        highlightColor: isDark ? Colors.grey.shade700 : Colors.grey.shade100,
+        baseColor: appColors.shimmerBase,
+        highlightColor: appColors.shimmerHighlight,
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           children: [
@@ -21,7 +22,7 @@ class ProfileShimmer extends StatelessWidget {
                   width: 76,
                   height: 34,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: appColors.shimmerSurface,
                     borderRadius: BorderRadius.circular(18),
                   ),
                 ),
@@ -29,7 +30,7 @@ class ProfileShimmer extends StatelessWidget {
                   width: 64,
                   height: 34,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: appColors.shimmerSurface,
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
@@ -43,7 +44,7 @@ class ProfileShimmer extends StatelessWidget {
                 width: 130,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: appColors.shimmerSurface,
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
@@ -54,7 +55,7 @@ class ProfileShimmer extends StatelessWidget {
                 width: 220,
                 height: 24,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: appColors.shimmerSurface,
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
@@ -65,14 +66,14 @@ class ProfileShimmer extends StatelessWidget {
                 width: 120,
                 height: 30,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: appColors.shimmerSurface,
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
             ),
             const SizedBox(height: 18),
             Divider(
-              color: Colors.white.withValues(alpha: 0.55),
+              color: appColors.shimmerSurface.withValues(alpha: 0.55),
               thickness: 0.8,
             ),
             const SizedBox(height: 18),
@@ -95,6 +96,7 @@ class _ShimmerField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appColors = Theme.of(context).appColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -102,7 +104,7 @@ class _ShimmerField extends StatelessWidget {
           width: 110,
           height: 20,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: appColors.shimmerSurface,
             borderRadius: BorderRadius.circular(6),
           ),
         ),
@@ -111,7 +113,7 @@ class _ShimmerField extends StatelessWidget {
           width: 200,
           height: 24,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: appColors.shimmerSurface,
             borderRadius: BorderRadius.circular(6),
           ),
         ),

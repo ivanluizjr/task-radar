@@ -88,7 +88,6 @@ class _CreateTodoSheetState extends State<CreateTodoSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isLight = theme.brightness == Brightness.light;
 
     return BlocListener<TodosBloc, TodosState>(
       listener: (context, state) {
@@ -114,7 +113,7 @@ class _CreateTodoSheetState extends State<CreateTodoSheet> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade600,
+                    color: theme.dividerColor,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -175,10 +174,7 @@ class _CreateTodoSheetState extends State<CreateTodoSheet> {
                   onPressed: () => setState(() => _isEditing = true),
                   child: Text(
                     'Editar tarefa',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      color: isLight ? Colors.white : Colors.black,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w500),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -206,10 +202,7 @@ class _CreateTodoSheetState extends State<CreateTodoSheet> {
                   onPressed: _isNameFilled ? _submit : null,
                   child: Text(
                     'Criar tarefa',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w500,
-                      color: isLight ? Colors.white : Colors.black,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w500),
                   ),
                 ),
             ],

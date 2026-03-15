@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:task_radar/app/core/theme/app_theme.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_bloc.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_event.dart';
 import 'package:task_radar/app/features/todos/presentation/bloc/todos_state.dart';
@@ -64,19 +63,14 @@ class TodoFilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isLight = theme.brightness == Brightness.light;
-    final selectedBackground = isLight
-        ? theme.appColors.grayLight
-        : theme.appColors.grayDark;
+    final selectedBackground = theme.colorScheme.primary;
     final chipBackground = selected ? selectedBackground : Colors.transparent;
     final textColor = selected
-        ? isLight
-              ? Colors.black
-              : Colors.white
-        : (isLight ? Colors.black : Colors.white);
+        ? theme.colorScheme.onPrimary
+        : theme.colorScheme.onSurface;
     final borderColor = selected
         ? selectedBackground
-        : (isLight ? Colors.black : theme.appColors.grayLight);
+        : theme.colorScheme.onSurface.withValues(alpha: 0.5);
 
     return Material(
       color: Colors.transparent,
