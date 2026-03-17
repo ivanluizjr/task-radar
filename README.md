@@ -183,3 +183,9 @@ Para regenerar os icones apos trocar o asset:
 flutter pub get
 dart run flutter_launcher_icons
 ```
+
+
+https://github.com/user-attachments/assets/03cdf315-2e93-4b73-a2d6-e79624efc81b
+
+
+
