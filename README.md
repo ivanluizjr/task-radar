@@ -1,189 +1,185 @@
-# 📡 Task Radar
+# Contribuindo com o Task Radar
 
-## Teste Técnico — Desenvolvedor(a) Mobile Sênior
+Este documento atende ao que foi solicitado no README para entrega do projeto:
 
-Bem-vindo(a) ao teste técnico do **Senai Soluções Digitais**!
+1. Arquitetura escolhida e justificativa
+2. Estrutura de pastas
+3. Instrucoes de build e execucao
+4. Motivacoes de mudancas de design
+5. Informacoes tecnicas adicionais relevantes
 
-O **Task Radar** é um aplicativo de gerenciamento de tarefas desenvolvido em Flutter que consome a API pública [DummyJSON](https://dummyjson.com). O objetivo deste teste é avaliar sua capacidade de tomar decisões arquiteturais sólidas, implementar funcionalidades completas e escrever código limpo e testável.
+## Pre-requisitos
 
-> ⚠️ A API DummyJSON **simula** operações de escrita (POST, PUT, DELETE) — ou seja, os dados não são persistidos no servidor. Isso significa que você precisará implementar **persistência local** para manter a consistência dos dados entre sessões.
+- Flutter 3.41.4+
+- Dart 3.11.1+
 
-### Flutter:
+## Setup do Projeto
 
-Utilizar:
-
-> Flutter 3.41.4
-Tools • Dart 3.11.1 • DevTools 2.54.1
-
-### Figma:
-
-As telas e fluxos foram desenhadas no figma para servirem como base. 
-
-[Link do figma](https://www.figma.com/community/file/1614012000737993326)  
-
-Clicando em "Abrir no figma" o projeto será copiado e associado a sua conta pessoal do figma.
-
-Caso tenha dificuldades em acessar através do figma, disponibilizamos as telas como imagens neste [link do drive](https://drive.google.com/drive/folders/1tsXkODyWKOoZa93XOAEQXjG15tF9H--b?usp=sharing).
-
-- É permitido mudanças e melhorias no design proposto, desde que sigam as funcionalidades previstas.
-
----
-
-## 🔐 Autenticação
-
-O app deve implementar um fluxo completo de autenticação com JWT auth/refreshtoken:
-
-- Tela de login com campos de usuário e senha
-- Validação de campos (não permitir envio com campos vazios)
-- Indicador de carregamento durante a requisição
-- Mensagem de erro clara em caso de credenciais inválidas
-
-**Credenciais de teste:**
-```
-Admin
-username: emilys
-password: emilyspass
-
-Moderador
-username: oliviaw
-password: oliviawpass
+```bash
+cd task_radar
+flutter pub get
+dart run build_runner build --delete-conflicting-outputs
 ```
 
----
+## Executando o App
 
-## ✅ Gerenciamento de Tarefas (CRUD)
+```bash
+flutter run
 
-O app deve permitir criar, visualizar, editar e excluir tarefas:
+Obs: Caso em IOS não rode, entrar na pasta ios e rodar:
+pod deintegrate
+pod install --repo-update
+rodar flutter run novamente
+```
 
-- **Criar:** formulário para adicionar nova tarefa
-- **Visualizar:** tela de detalhe ao tocar em uma tarefa
-- **Editar:** alterar descrição da tarefa
-- **Alternar status:** marcar/desmarcar como concluída
-- **Excluir:** remover tarefa
-Em caso de falha de rede, manter o estado anterior e exibir mensagem de erro
+Credenciais de teste:
 
----
+- Admin: emilys / emilyspass
+- Moderator: oliviaw / oliviawpass
 
-## 📄 Listagem com Paginação
+## Executando os Testes
 
-- Carregar tarefas paginadas com parâmetros `limit` e `skip`
-- Implementar **scroll infinito** (carregar próxima página ao chegar no final da lista)
-- Exibir indicador de carregamento no rodapé da lista durante o fetch
-- Parar de buscar quando todas as tarefas forem carregadas
+```bash
+flutter test
+```
 
----
+## Arquitetura Escolhida e Justificativa
 
-## 🔍 Filtro e Busca
+O projeto foi implementado com Clean Architecture por feature, mesmo sendo um escopo de teste tecnico.
 
-- Filtros: todas as tarefas, apenas concluídas, apenas pendentes
-- Busca por texto (case-insensitive) no campo de descrição da tarefa
-- Ao limpar a busca, restaurar a lista respeitando o filtro ativo
-- Exibir indicador visual do filtro/busca ativos
-- Opções de ordenação: padrão (por id), alfabética (por texto), por status de conclusão
-- Permitir alternar entre ordem crescente e decrescente
-- Manter a ordenação ativa quando filtros ou busca estiverem aplicados
+### Por que usar Clean Architecture aqui
 
----
+Mesmo sem necessidade imediata de alta escala, a escolha foi intencional por tres motivos principais:
 
-## 💾 Persistência Local (Offline-First)
+1. Demonstrar maturidade tecnica e capacidade de estruturar um app com separacao clara de responsabilidades.
+2. Facilitar evolucao e manutencao: novas features e mudancas de regras de negocio entram com baixo acoplamento.
+3. Melhor testabilidade: domain e use cases podem ser validados de forma isolada de UI e infraestrutura.
 
-Como a API não persiste dados, o app **deve** implementar persistência local:
+### Fluxo de dados
 
-- Cachear os dados da API no primeiro fetch
-- Aplicar mudanças (criar/editar/excluir) no armazenamento local imediatamente
-- Servir dados do cache quando não houver conexão
+UI -> BLoC/Cubit -> UseCase -> Repository -> DataSource (Remote/Local)
 
----
+### Como essa arquitetura foi aplicada no codigo
 
-## 👤 Perfil do Usuário
+- DI centralizada com get_it em lib/app/core/di/injection_container.dart.
+- Rotas e controle de acesso por role com go_router em lib/app/core/routes/app_router.dart.
+- Persistencia local offline-first para todos, com merge local/remoto para contornar a nao persistencia da DummyJSON.
+- Tratamento de falhas com Either<Failure, T> para evitar excecoes propagando para UI.
 
-- Buscar dados do usuário autenticado 
-- Loading skeleton/indicador durante o carregamento
-- Mensagem de erro com opção de retry em caso de falha
+## Explicacao da Estrutura de Pastas
 
----
+```text
+lib/app/
+|- core/                    # Fundacao compartilhada
+|  |- constants/            # Constantes de API e aplicacao
+|  |- database/             # SQLite/sqflite e versoes de schema
+|  |- di/                   # Registro de dependencias (get_it)
+|  |- either/               # Tipo funcional Either
+|  |- errors/               # Exceptions e Failures
+|  |- network/              # ApiClient (Dio), conectividade, interceptors
+|  |- routes/               # go_router e redirecionamentos
+|  |- theme/                # AppTheme, ThemeCubit e tokens visuais
+|  |- usecases/             # Contrato base de caso de uso
+|  |- widgets/              # Componentes reutilizaveis
+|
+|- features/
+|  |- auth/
+|  |- todos/
+|  |- users/
+|  |- quotes/
+|  |- dashboard/
+|  |- profile/
+|  |- splash/
+```
 
-## Tema light/dark
+Cada feature segue:
 
-- Implementar ambos temas e permitir que usuários alternem entre eles.
+```text
+feature/
+|- domain/
+|  |- entities/
+|  |- repositories/
+|  |- usecases/
+|- data/
+|  |- datasources/
+|  |- models/
+|  |- repositories/
+|- presentation/
+   |- bloc/
+   |- pages/
+   |- widgets/
+```
 
----
+## Padroes e Tecnologias
 
-## 🛡️ Controle por Role (Admin vs Moderator)
-
-A API retorna o campo `role` do usuário (`"admin"` ou `"moderator"`). O app deve se comportar de forma diferente conforme o papel:
-
-- **Admin:** exibe uma seção "Usuários" na navegação com a lista de todos os usuários
-- Ao tocar em um usuário, exibir as tarefas dele`
-- **Moderator:** não tem acesso à seção de usuários, vê apenas suas próprias tarefas
-- Esconder itens de navegação e rotas que não se aplicam ao role do usuário
-- Se um moderator tentar acessar uma rota de admin, redirecionar para o dashboard
-
-> A API não impõe restrições por role — o controle de acesso deve ser implementado no client.
-
----
-
-## 🏠 Dashboard
-
-- Exibir resumo: total de tarefas, concluídas e pendentes
-- Buscar e exibir uma frase motivacional aleatória via `GET /quotes/random` (texto + autor)
-- Loading independente para cada seção do dashboard
-- Fallback caso a busca da frase falhe
-
----
-
-## 🏗️ Arquitetura e Qualidade de Código
-
-Este é um teste para **Desenvolvedor(a) Sênior**. Esperamos ver decisões arquiteturais bem fundamentadas:
-
-| Aspecto | Expectativa |
+| Aspecto | Tecnologia |
 |---|---|
-| **Arquitetura** |Separação clara entre as responsabilidades  |
-| **Injeção de dependência** | Uso de uma solução de DI (get_it) |
-| **Gerenciamento de estado** | Utilizar BLOC |
-| **Serialização** | Classes de modelo com serialização/deserialização JSON (json_serializable/freezed) |
-| **Rotas** | Gerenciamento declarativo de rotas (go_router) |
+| Gerenciamento de estado | BLoC / Cubit |
+| Injetor de dependencias | get_it |
+| Navegacao | go_router |
+| Serializacao | freezed + json_serializable |
+| HTTP | Dio |
+| Persistencia local | sqflite |
+| Storage seguro | flutter_secure_storage |
+| Testes | bloc_test + mocktail |
 
----
+## Motivacoes de Mudancas no Design
 
-## 📚 Referência da API
+Foram feitas adaptacoes de UI alem do layout base para melhorar consistencia visual e legibilidade entre light/dark:
 
-| Recurso | Endpoint | Método |
-|---|---|---|
-| Login | `/auth/login` | POST |
-| Refresh token | `/auth/refresh` | POST |
-| Usuário autenticado | `/auth/me` | GET |
-| Listar tarefas | `/todos` | GET |
-| Tarefa por ID | `/todos/{id}` | GET |
-| Tarefa aleatória | `/todos/random` | GET |
-| Tarefas por usuário | `/todos/user/{userId}` | GET |
-| Criar tarefa | `/todos/add` | POST |
-| Atualizar tarefa | `/todos/{id}` | PUT/PATCH |
-| Excluir tarefa | `/todos/{id}` | DELETE |
-| Listar usuários | `/users` | GET |
-| Usuário por ID | `/users/{id}` | GET |
-| Buscar usuários | `/users/search?q=` | GET |
-| Filtrar usuários | `/users/filter?key=&value=` | GET |
-| Ordenar usuários | `/users?sortBy=&order=` | GET |
-| Listar frases | `/quotes` | GET |
-| Frase aleatória | `/quotes/random` | GET |
+1. Conexao com tema global
 
-**Paginação:** todos os endpoints de listagem suportam `?limit=X&skip=Y`
+- Cores de titulos e elementos de filtro (Todos, Pendentes, Concluidas, Administradores, Moderadores) foram alinhadas ao ThemeData para evitar divergencia entre telas.
+- Objetivo: manter paridade visual e funcional nos dois temas sem hardcode de cor por tela.
 
-**Delay para testes:** `?delay=1000` (0 a 5000ms)
+2. Centralizacao de cor no AppTheme
 
-**Documentação completa:** [https://dummyjson.com/docs](https://dummyjson.com/docs)
+- Reducao progressiva de condicionais locais (isLight/isDark) em componentes onde a decisao pode ser de tema.
+- Ganho: manutencao mais simples e menor risco de regressao quando ajustar paleta.
 
----
+3. Melhor contraste e estado selecionado
 
-# 📝 O que entregar
+- Filtros/chips passaram por ajustes para deixar estado selecionado claramente perceptivel em light e dark.
+- Em pontos com comportamento complexo (como toggle custom de tema no perfil), manteve-se logica local onde faz sentido.
 
-1. Código-fonte completo do projeto Flutter commitado na branch `main`
-2. Documentação no arquivo **CONTRIBUTING.md** contendo:
-   - Arquitetura escolhida e justificativa
-   - Explicação da estrutura de pastas
-   - Instruções para build e execução do projeto
-   - Motivações de eventuais mudanças no design
-   - Demais informações que você considerar útil o compartilhamento
+4. Feedback visual consistente
 
-Boa sorte! 🚀
+- Componentes de shimmer e cards foram ajustados para seguir tokens de tema e nao refletirem visual de dark no light.
+
+## Informacoes Uteis de Desenvolvimento
+
+### Geração de codigo
+
+Ao alterar models com freezed/json:
+
+```bash
+dart run build_runner build --delete-conflicting-outputs
+```
+
+### API utilizada
+
+DummyJSON: https://dummyjson.com
+
+- Auth: POST /auth/login, POST /auth/refresh, GET /auth/me
+- Todos: GET /todos, GET /todos/user/:id, POST /todos/add, PUT /todos/:id, DELETE /todos/:id
+- Users: GET /users
+- Quotes: GET /quotes/random
+
+### Nota importante sobre persistencia
+
+A DummyJSON nao persiste escrita real (POST/PUT/DELETE simulados). Por isso, o app usa estrategia offline-first com persistencia local e merge para manter estado consistente entre sessoes.
+
+### Icone do aplicativo
+
+O icone exibido na instalacao do app foi configurado para Android e iOS a partir do asset:
+
+- assets/images/icon_task_radar.png
+
+Geracao realizada com flutter_launcher_icons.
+
+Para regenerar os icones apos trocar o asset:
+
+```bash
+flutter pub get
+dart run flutter_launcher_icons
+```
